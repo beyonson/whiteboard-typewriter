@@ -4,7 +4,7 @@
 * Garrett Marcinak
 * Yasser Morsy
 * Justin Harnishfeger
-* Reece Bashore
+* Reece Basehore
 
 ### Background
 
