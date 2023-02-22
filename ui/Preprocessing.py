@@ -1,27 +1,30 @@
 import cv2 
 import numpy as np 
   
-def binarize(path):
-    # path to input image is specified and  
-    # image is loaded with imread command 
+def processChar(path):
     image1 = cv2.imread('./chars/' + path) 
-    
-    # cv2.cvtColor is applied over the
-    # image input with applied parameters
-    # to convert the image in grayscale 
     img = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
-    
-    # applying different thresholding 
-    # techniques on the input image
-    # all pixels value above 120 will 
-    # be set to 255
-    ret, thresh1 = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
-    
-    # the window showing output images
-    # with the corresponding thresholding 
-    # techniques applied to the input images
+    ret, thresh1 = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY_INV)
     cv2.imwrite('./binarized/' + path, thresh1)
-        
-    # De-allocate any associated memory usage  
+
+    size = np.size(thresh1)
+    skel = np.zeros(thresh1.shape,np.uint8)
+    
+    ret,img = cv2.threshold(thresh1,127,255,0)
+    element = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
+    done = False
+    
+    while( not done):
+        eroded = cv2.erode(img,element)
+        temp = cv2.dilate(eroded,element)
+        temp = cv2.subtract(img,temp)
+        skel = cv2.bitwise_or(skel,temp)
+        img = eroded.copy()
+    
+        zeros = size - cv2.countNonZero(img)
+        if zeros==size:
+            done = True
+    
+    cv2.imwrite("./skeletonized/" + path, skel)
     if cv2.waitKey(0) & 0xff == 27: 
         cv2.destroyAllWindows() 

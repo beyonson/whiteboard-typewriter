@@ -8,4 +8,4 @@ def scrotChar(xPos, yPos, fontSize, charsTyped):
     ss_img = ImageGrab.grab(ss_region)
     ss_img = ss_img.resize((110, 300))
     ss_img.save('chars/' + ss_name)
-    binarize(ss_name)
+    processChar(ss_name)

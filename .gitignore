@@ -2,6 +2,7 @@
 ui/binarized
 ui/chars
 ui/sd
+ui/skeletonized
 
 # all
 __pycache__/
