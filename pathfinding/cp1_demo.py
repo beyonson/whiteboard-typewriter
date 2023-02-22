@@ -37,13 +37,13 @@ print("Drawing circle (CW):")
 print(gcode)
 
 ################################################################
-# CURVED LINE TEST: Draw a circle (CCW)
+# CURVED LINE TEST: Draw a semicircle (CCW)
 
 lines = []
 lines.append(Line(.1,.2,.2,.1,.2,.2,90))
 lines.append(Line(.2,.1,.3,.2,.2,.2,90))
-lines.append(Line(.3,.2,.2,.3,.2,.2,90))
-lines.append(Line(.2,.3,.1,.2,.2,.2,90))
+lines.append(Line(.3,.2,.1,.2))
+#lines.append(Line(.2,.3,.1,.2,.2,.2,90))
 
 pathfinder = Pathfinder(lines)
 gcode = ""
@@ -52,7 +52,7 @@ if pathfinder.checkDone():
     pathfinder.convert()
     gcode = pathfinder.getGCode()
 
-print("Drawing circle (CCW):")
+print("Drawing semicircle (CCW):")
 print(gcode)
 
 ################################################################
@@ -71,5 +71,5 @@ if pathfinder.checkDone():
     pathfinder.convert()
     gcode = pathfinder.getGCode()
 
-print("Drawing two arcs (CCW):")
+print("Drawing two arcs (CW/CCW):")
 print(gcode)
