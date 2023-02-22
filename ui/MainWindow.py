@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from time import sleep
 from PyQt5 import QtCore, QtGui, QtWidgets, QtWidgets
@@ -8,9 +9,13 @@ from PyQt5.QtCore import *
 from TextGrabber import *
 from PyQt5.QtCore import QLibraryInfo
 
+# Deal with redundant libraries
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = QLibraryInfo.location(
     QLibraryInfo.PluginsPath
 )
+
+# Clear image directories
+subprocess.run("./CleanDirectories.sh")
 
 # Style sheet
 styleSheet = """
