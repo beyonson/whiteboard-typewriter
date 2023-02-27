@@ -14,16 +14,7 @@ def processChar(path):
     element = cv2.getStructuringElement(cv2.MORPH_CROSS,(3,3))
     done = False
     
-    while( not done):
-        eroded = cv2.erode(img,element)
-        temp = cv2.dilate(eroded,element)
-        temp = cv2.subtract(img,temp)
-        skel = cv2.bitwise_or(skel,temp)
-        img = eroded.copy()
-    
-        zeros = size - cv2.countNonZero(img)
-        if zeros==size:
-            done = True
+    skel = cv2.ximgproc.thinning(img)
     
     cv2.imwrite("./skeletonized/" + path, skel)
     if cv2.waitKey(0) & 0xff == 27: 
