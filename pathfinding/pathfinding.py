@@ -68,6 +68,28 @@ class Pathfinder:
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
+    def convertConstZ(self):
+        self.gcode = ""
+        curLine = ""
+        lastPoint = (0,0)
+        self.gcode += "G01 X0 Y0 Z0\n"
+        for line in self.segments:
+            curLine = ""
+            if line.checkPickup(lastPoint):
+                curLine += "G01 X" + str(line.start[0]) + " Y" + str(line.start[1]) + " Z0\n"
+                lastPoint = line.end
+            if line.center[0] == -1 and line.center[1] == -1:
+                curLine += "G01 "
+            else: # TODO: Logic determining CW / CCW
+                if line.checkDirection():
+                    curLine += "G02 "
+                else:
+                    curLine += "G03 "
+            curLine += "X" + str(line.end[0]) + " Y" + str(line.end[1]) + " Z0"
+            lastPoint = line.end
+            if line.center[0] != -1 and line.center[1] != -1:
+                curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
+            self.gcode += curLine + "\n"
     def checkDone(self):
         return self.done
     def getGCode(self):
