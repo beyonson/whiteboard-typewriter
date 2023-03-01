@@ -3,6 +3,8 @@ ui/binarized
 ui/chars
 ui/sd
 ui/skeletonized
+text-rendering/build/CMakeFiles
+text-rendering/build/external
 
 # all
 __pycache__/
