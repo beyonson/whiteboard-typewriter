@@ -8,6 +8,8 @@
 # G21: Set units to millimeters
 # G28: Return home
 
+import math
+
 class Line:
     def __init__(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
         self.start = (startX,startY)
@@ -36,15 +38,37 @@ class Line:
             else:
                 return self.arc > 180
 
+class Node:
+    __COUNTER = 0
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+        self.edges = []
+        Node.__COUNTER += 1
+        self.id = Node.__COUNTER
+    def addEdge(self,edge):
+        self.edges.append(edge)
+
+class Edge:
+    __COUNTER = 0
+    def __init__(self,distance,nodes):
+        self.dist = distance
+        self.nodes = nodes
+        Edge.__COUNTER += 1
+        self.id = Edge.__COUNTER
+
 class Pathfinder:
     def __init__(self,lines):
         self.segments = lines
+        self.nodes = []
+        self.edges = []
         self.done = False
         self.gcode = ""
-    def translate(self):
-        print("TRANSLATE")
-        # BLANK: May not be necessary
     def pathfind(self):
+        vNodes = [0] * length(self.nodes)
+        vEdges = [0] * length
+        # SELECT STARTING POINT (Either methodically, or repeat and arbitrarily)
+        #
         self.done = True
     def convert(self):
         self.gcode = ""
@@ -90,6 +114,22 @@ class Pathfinder:
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
+    def getDistance(self,line,nA,nB):
+        if line.center[0] == -1:
+            return abs(sqrt((nB.x-nA.x)**2 + (nB.y-nA.y)**2))
+        else: # NEEDS TO BE FIXED TO HANDLE OVALS
+            radius = abs(sqrt((nA.x-line.center.x)**2 + (nA.y-line.center.y)**2))
+            return line.arc * (math.pi / 180) * radius
+    def nodify(self):
+        print("Convert Lines to Nodes and Edges")
+        for line in self.segments:
+            self.nodes.append(Node(line.start[0],line.start[1]))
+            self.nodes.append(Node(line.end[0],line.end[1]))
+            self.edges.append(Edge(self.getDistance(line,self.nodes[-1],self.nodes[-2]),[self.nodes[-2],self.nodes[-1]))
+            self.nodes[-2].addEdge(self.edges[-1])
+            self.nodes[-1].addEdge(self.edges[-1])
+    def deNodify(self):
+        print("Convert Nodes and Edges to Lines")
     def checkDone(self):
         return self.done
     def getGCode(self):
