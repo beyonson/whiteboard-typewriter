@@ -44,8 +44,8 @@ class Node:
         self.x = x
         self.y = y
         self.edges = []
-        Node.__COUNTER += 1
         self.id = Node.__COUNTER
+        Node.__COUNTER += 1
     def addEdge(self,edge):
         self.edges.append(edge)
 
@@ -54,8 +54,18 @@ class Edge:
     def __init__(self,distance,nodes):
         self.dist = distance
         self.nodes = nodes
-        Edge.__COUNTER += 1
         self.id = Edge.__COUNTER
+        Edge.__COUNTER += 1
+    def returnOtherNode(self,node):
+        if self.nodes[0] == node:
+            return self.nodes[1]
+        else:
+            return self.nodes[0]
+    def hasNode(self,id):
+        for i in range(length(self.nodes)):
+            if self.nodes[i].id == id:
+                return True
+        return False
 
 class Pathfinder:
     def __init__(self,lines):
@@ -65,9 +75,10 @@ class Pathfinder:
         self.done = False
         self.gcode = ""
     def pathfind(self):
-        vNodes = [0] * length(self.nodes)
-        vEdges = [0] * length
         # SELECT STARTING POINT (Either methodically, or repeat and arbitrarily)
+        self.initDictionary()
+        for i in range(length(nodes)):
+            vEdges = [0] * length(self.edges)
         #
         self.done = True
     def convert(self):
@@ -128,6 +139,13 @@ class Pathfinder:
             self.edges.append(Edge(self.getDistance(line,self.nodes[-1],self.nodes[-2]),[self.nodes[-2],self.nodes[-1]))
             self.nodes[-2].addEdge(self.edges[-1])
             self.nodes[-1].addEdge(self.edges[-1])
+    def initDictionary(self):
+        dict = {}
+        for i in range(length(self.nodes)):
+            dict[i] = []
+            for edge in self.edges:
+                if edge.hasNode(i):
+                    dict[i].append(edge)
     def deNodify(self):
         print("Convert Nodes and Edges to Lines")
     def checkDone(self):
