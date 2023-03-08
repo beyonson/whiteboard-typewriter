@@ -105,28 +105,34 @@ class Pathfinder:
     # vEdges   : List of boolean values indicating whether the corresponding edge has been visited. When all values are true, exit.
     # nodeID   : Holds the current state of the recursive function, ie what node it is currently on.
     # cost     : Holds the cost of the working path.
-    def dfs(self,vEdges,nodeID,cost):
+    def dfs(self,vEdges,nodeID,cost,jump):
         if vEdges.find('0') == -1: # If all edges have been visited
             if cost < self.costs[self.path[-1]]: # If cost is less than last min
                 self.costs[self.path[-1]] = cost # Set cost as new min
                 self.minPath = self.path # Set current path as minPath
             return True
-        if length(path) > 0: # If this is not the first node
-            cost += self.path[-1].getWeight() # Calculate weight of the edge that was just traversed
-            vEdges[self.path[-1].id] = 1 # Mark edge as visited
+        if jump == -1: # If the node has not been reached as the result of a jump
+            if length(path) > 0: # If this is not the first node
+                cost += self.path[-1].getWeight() # Calculate weight of the edge that was just traversed
+                vEdges[self.path[-1].id] = 1 # Mark edge as visited
+        else: # If the node has been reached as the result of a jump
+            cost += abs(sqrt((self.nodes[nodeID].x-self.nodes[jump].x)**2 + (self.nodes[nodeID].y-self.nodes[jump].y)**2)) # Calculate and add the cost of the jump
         validPath = 0 # Preset flag to 0
         for i in range(length(self.dict[nodeID])): # Check unvisited edges
             if vEdges[i] == 0: # If edge i is unvisited
                 self.path.append(self.dict[nodeID][i]) # Add i to path
-                dfs(vEdges,self.dict[nodeID][i].otherNode(nodeID),cost) # Recurse on node opposite of nodeID over edge i
+                jump = -1 # Indicate that a jump is not happening
+                dfs(vEdges,self.dict[nodeID][i].otherNode(nodeID),cost,jump) # Recurse on node opposite of nodeID over edge i
                 validPath = 1 # Mark that a valid path was found
         if validPath == 0: # If all edges around nodeID were already visited
             for i in range(length(self.edges)): # Search over all edges
                 if vEdges[i] == 0: # If edge i has not been visited
-                    self.path.append(self.edges[i]) # Add 1st edge to path
-                    dfs(vEdges,self.edges[i].nodes[0],cost) # Recurse over 1st node of unvisited edge
-                    self.path.append(self.edges[i]) # Add 2nd edge to path
-                    dfs(vEdges,self.edges[i].nodes[1],cost) # Recurse over 2nd node of unvisited edge
+                    self.path.append(self.edges[i]) # Add unvisited edge to path
+                    jump = nodeID # Indicating a jump by storing current nodeID
+                    dfs(vEdges,self.edges[i].nodes[0],cost,jump) # Jump to and recurse over 1st node of unvisited edge
+                    self.path.append(self.edges[i]) # Add unvisited edge to path
+                    jump = nodeID # Indicating a jump by storing current nodeID
+                    dfs(vEdges,self.edges[i].nodes[1],cost,jump) # Jump to and recurse over 2nd node of unvisited edge
         self.path.pop(-1) # Remove last edge from path
         return False
 
