@@ -61,6 +61,8 @@ class Edge:
             return self.nodes[1]
         else:
             return self.nodes[0]
+    def getWeight(self):
+        return abs(sqrt((self.nodes[1].x-self.nodes[0].x)**2 + (self.nodes[1].y-self.nodes[0].y)**2))
     def hasNode(self,id):
         for i in range(length(self.nodes)):
             if self.nodes[i].id == id:
@@ -70,17 +72,41 @@ class Edge:
 class Pathfinder:
     def __init__(self,lines):
         self.segments = lines
-        self.nodes = []
-        self.edges = []
-        self.done = False
-        self.gcode = ""
+        self.nodes = [] #   nodes  : List of all nodes, with the index being each ones id.
+        self.edges = [] #   edges  : List of all edges, with the index being each ones id.
+        self.dict = {} #    dict   : Dictionary with the id of each node as a Key, and each connected edge as a Value.
+        self.path = [] #    path   : A list of the edges used in the optimal path. Each edge is indicated by its id.
+        self.done = False # done   : Flag raised when pathfinding has been completed.
+        self.gcode = "" #   gcode  : String holding complete gcode for given character.
+
     def pathfind(self):
-        # SELECT STARTING POINT (Either methodically, or repeat and arbitrarily)
-        self.initDictionary()
+        # SELECT STARTING POINT (arbitrarily)
+        self.dict = self.initDictionary()
+        costs = [0] * length(self.nodes)
+        minCost = 1000000
+        minPath = []
         for i in range(length(nodes)):
             vEdges = [0] * length(self.edges)
+            ######
+            dfs(vEdges,i,costs,i)
+            ######
+            if costs[i] < minCost:
+                minCost = costs[i]
+                minPath = path
         #
+        path = minPath
         self.done = True
+
+    # vEdges : List of boolean values indicating whether the corresponding edge has been visited. When all values are true, exit.
+    # nodeID : Holds the current state of the recursive function, ie what node it is currently on.
+    # costs  : Holds the cost of the path for each starting point. Indexed by startPt.
+    # startPt: The node that was first in the path for this iteration. Used to index costs.
+    def dfs(self,vEdges,nodeID,costs,startPt):
+        if 0 not in vEdges:
+            break
+
+
+    # Converts edges in the optimized order into gcode
     def convert(self):
         self.gcode = ""
         curLine = ""
@@ -103,6 +129,8 @@ class Pathfinder:
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
+
+    # Variant of convert function that keeps the Z value set to 0 for debugging purposes.
     def convertConstZ(self):
         self.gcode = ""
         curLine = ""
@@ -125,12 +153,14 @@ class Pathfinder:
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
+
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
             return abs(sqrt((nB.x-nA.x)**2 + (nB.y-nA.y)**2))
         else: # NEEDS TO BE FIXED TO HANDLE OVALS
             radius = abs(sqrt((nA.x-line.center.x)**2 + (nA.y-line.center.y)**2))
             return line.arc * (math.pi / 180) * radius
+
     def nodify(self):
         print("Convert Lines to Nodes and Edges")
         for line in self.segments:
@@ -139,6 +169,7 @@ class Pathfinder:
             self.edges.append(Edge(self.getDistance(line,self.nodes[-1],self.nodes[-2]),[self.nodes[-2],self.nodes[-1]))
             self.nodes[-2].addEdge(self.edges[-1])
             self.nodes[-1].addEdge(self.edges[-1])
+
     def initDictionary(self):
         dict = {}
         for i in range(length(self.nodes)):
@@ -146,9 +177,13 @@ class Pathfinder:
             for edge in self.edges:
                 if edge.hasNode(i):
                     dict[i].append(edge)
+        return dict
+
     def deNodify(self):
         print("Convert Nodes and Edges to Lines")
+
     def checkDone(self):
         return self.done
+
     def getGCode(self):
         return self.gcode
