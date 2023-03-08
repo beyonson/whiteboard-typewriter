@@ -105,18 +105,19 @@ class Pathfinder:
     # vEdges   : List of boolean values indicating whether the corresponding edge has been visited. When all values are true, exit.
     # nodeID   : Holds the current state of the recursive function, ie what node it is currently on.
     # cost     : Holds the cost of the working path.
+    # jump     : Variable holding data about whether a jump occurred. If -1, no jump has occurred. If >= 0, a jump occurred from nodeID == jump.
     def dfs(self,vEdges,nodeID,cost,jump):
-        if vEdges.find('0') == -1: # If all edges have been visited
-            if cost < self.costs[self.path[-1]]: # If cost is less than last min
-                self.costs[self.path[-1]] = cost # Set cost as new min
-                self.minPath = self.path # Set current path as minPath
-            return True
         if jump == -1: # If the node has not been reached as the result of a jump
             if length(path) > 0: # If this is not the first node
                 cost += self.path[-1].getWeight() # Calculate weight of the edge that was just traversed
                 vEdges[self.path[-1].id] = 1 # Mark edge as visited
         else: # If the node has been reached as the result of a jump
             cost += abs(sqrt((self.nodes[nodeID].x-self.nodes[jump].x)**2 + (self.nodes[nodeID].y-self.nodes[jump].y)**2)) # Calculate and add the cost of the jump
+        if vEdges.find('0') == -1: # If all edges have been visited
+            if cost < self.costs[self.path[-1]]: # If cost is less than last min
+                self.costs[self.path[-1]] = cost # Set cost as new min
+                self.minPath = self.path # Set current path as minPath
+            return True # Return to last recursion
         validPath = 0 # Preset flag to 0
         for i in range(length(self.dict[nodeID])): # Check unvisited edges
             if vEdges[i] == 0: # If edge i is unvisited
@@ -134,7 +135,7 @@ class Pathfinder:
                     jump = nodeID # Indicating a jump by storing current nodeID
                     dfs(vEdges,self.edges[i].nodes[1],cost,jump) # Jump to and recurse over 2nd node of unvisited edge
         self.path.pop(-1) # Remove last edge from path
-        return False
+        return False # Return to last recursion
 
     # Converts edges in the optimized order into gcode
     def convert(self):
