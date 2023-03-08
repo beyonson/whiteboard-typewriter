@@ -62,7 +62,7 @@ class Edge:
         else:
             return self.nodes[0]
     def getWeight(self):
-        return abs(sqrt((self.nodes[1].x-self.nodes[0].x)**2 + (self.nodes[1].y-self.nodes[0].y)**2))
+        return self.dist
     def hasNode(self,id):
         for i in range(length(self.nodes)):
             if self.nodes[i].id == id:
@@ -72,58 +72,62 @@ class Edge:
 class Pathfinder:
     def __init__(self,lines):
         self.segments = lines
-        self.nodes = [] #   nodes  : List of all nodes, with the index being each ones id.
-        self.edges = [] #   edges  : List of all edges, with the index being each ones id.
-        self.dict = {} #    dict   : Dictionary with the id of each node as a Key, and each connected edge as a Value.
-        self.path = [] #    path   : A list of the edges used in the optimal path. Each edge is indicated by its id.
-        self.done = False # done   : Flag raised when pathfinding has been completed.
-        self.gcode = "" #   gcode  : String holding complete gcode for given character.
+        self.nodes = [] #     nodes     : List of all nodes, with the index being each ones id.
+        self.edges = [] #     edges     : List of all edges, with the index being each ones id.
+        self.dict = {} #      dict      : Dictionary with the id of each node as a Key, and each connected edge as a Value.
+        self.path = [] #      path      : A list of the edges used in the working path. Each edge is indicated by its id.
+        self.minPath = [] #   minPath   : A list of the edges used in the optimal path. Each edge is indicated by its id.
+        self.costs = [] #     costs     : A list of the relative costs for each edge in a character for a given starting node. Each edge is indicated by its id.
+        self.done = False #   done      : Flag raised when pathfinding has been completed.
+        self.gcode = "" #     gcode     : String holding complete gcode for given character.
 
     def pathfind(self):
         self.dict = self.initDictionary()
-        costs = [0] * length(self.nodes)
+        self.costs = [0] * length(self.nodes)
         minCost = 1000000
-        minPath = []
+        finalPath = []
         for i in range(length(nodes)):
-            vEdges = [0] * length(self.edges)
+            temp = ""
+            vEdges = temp.zfill(length(self.edges))
             self.path = []
+            self.minPath = []
+            cost = 0
             ######
-            dfs(vEdges,i,costs,i)
+            dfs(vEdges,i,cost)
+            costs[i] = cost
             ######
             if costs[i] < minCost:
                 minCost = costs[i]
-                minPath = self.path
-        #
-        self.path = minPath
+                finalPath = self.minPath
+        self.minPath = finalPath
         self.done = True
 
     # vEdges   : List of boolean values indicating whether the corresponding edge has been visited. When all values are true, exit.
     # nodeID   : Holds the current state of the recursive function, ie what node it is currently on.
-    # costs    : Holds the cost of the path for each starting point. Indexed by startPt.
-    # startPt  : The node that was first in the path for this iteration. Used to index costs.
-
-    #FIX: Cost rises on backtracking
-    #FIX: Exit whenever vEdges is complete, not upon finding optimal
-    def dfs(self,vEdges,nodeID,costs,startPt):
-        if 0 not in vEdges:
+    # cost     : Holds the cost of the working path.
+    def dfs(self,vEdges,nodeID,cost):
+        if vEdges.find('0') == -1: # If all edges have been visited
+            if cost < self.costs[self.path[-1]]: # If cost is less than last min
+                self.costs[self.path[-1]] = cost # Set cost as new min
+                self.minPath = self.path # Set current path as minPath
             return True
-        if length(path) == 0:
-            costs[startPt] += self.path[-1].getWeight()
-            vEdges[self.path[-1].id] = 1
-            self.path.append()
-        validPath = 0
+        if length(path) > 0: # If this is not the first node
+            cost += self.path[-1].getWeight() # Calculate weight of the edge that was just traversed
+            vEdges[self.path[-1].id] = 1 # Mark edge as visited
+        validPath = 0 # Preset flag to 0
         for i in range(length(self.dict[nodeID])): # Check unvisited edges
-            if vEdges[i] == 0:
-                if not dfs(vEdges,self.dict[nodeID][i].otherNode(nodeID),costs,startPt):
-                    self.path.pop(-1)
-                validPath = 1
-        if validPath == 0: # Try jumping to any nodes around valid edges if no edges are unvisited
-            for i in range(length(self.edges)):
-                if vEdges[i] == 0:
-                    if not dfs(vEdges,self.edges[i].nodes[0],costs,startPt):
-                        self.path.pop(-1)
-                    if not dfs(vEdges,self.edges[i].nodes[1],costs,startPt):
-                        self.path.pop(-1)
+            if vEdges[i] == 0: # If edge i is unvisited
+                self.path.append(self.dict[nodeID][i]) # Add i to path
+                dfs(vEdges,self.dict[nodeID][i].otherNode(nodeID),cost) # Recurse on node opposite of nodeID over edge i
+                validPath = 1 # Mark that a valid path was found
+        if validPath == 0: # If all edges around nodeID were already visited
+            for i in range(length(self.edges)): # Search over all edges
+                if vEdges[i] == 0: # If edge i has not been visited
+                    self.path.append(self.edges[i]) # Add 1st edge to path
+                    dfs(vEdges,self.edges[i].nodes[0],cost) # Recurse over 1st node of unvisited edge
+                    self.path.append(self.edges[i]) # Add 2nd edge to path
+                    dfs(vEdges,self.edges[i].nodes[1],cost) # Recurse over 2nd node of unvisited edge
+        self.path.pop(-1) # Remove last edge from path
         return False
 
     # Converts edges in the optimized order into gcode
