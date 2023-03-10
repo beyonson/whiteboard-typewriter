@@ -10,6 +10,10 @@
 
 import math
 
+def clean():
+    Edge.resetCounter()
+    Node.resetCounter()
+
 class Line:
     def __init__(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
         self.start = (startX,startY)
@@ -52,6 +56,9 @@ class Node:
         Node.__COUNTER += 1
     def addEdge(self,edge):
         self.edges.append(edge)
+    @classmethod
+    def resetCounter(cls):
+        cls.__COUNTER = 0
 
 class Edge:
     __COUNTER = 0
@@ -68,13 +75,17 @@ class Edge:
     def getWeight(self):
         return self.dist
     def hasNode(self,id):
-        for i in range(length(self.nodes)):
+        for i in range(len(self.nodes)):
             if self.nodes[i].id == id:
                 return True
         return False
+    @classmethod
+    def resetCounter(cls):
+        cls.__COUNTER = 0
 
 class Pathfinder:
     def __init__(self,lines):
+        clean()
         self.segments = lines
         self.nodes = [] #     nodes          : List of all nodes, with the index being each ones id.
         self.edges = [] #     edges          : List of all edges, with the index being each ones id.
@@ -82,55 +93,65 @@ class Pathfinder:
         self.path = [] #      path           : A list of the edges used and jumps in the working path. Each edge is indicated by its id, and jumps by either -1 or destination node.
         self.minPath = [] #   minPath        : A list of the edges used and jumps in the optimal path. Each edge is indicated by its id, and jumps by either -1 or destination node
         self.costs = [] #     costs          : A list of the relative costs for each edge in a character for a given starting node. Each edge is indicated by its id.
+        self.startPt = 0 #    startPt        : Integer to keep track of what node was chosen as the starting point.
         self.done = False #   done           : Flag raised when pathfinding has been completed.
         self.gcode = "" #     gcode          : String holding complete gcode for given character.
 
     def pathfind(self):
+        self.nodify()
         self.dict = self.initDictionary() # Initialize dictionary data structure for pathfinding
-        self.costs = [0] * length(self.nodes) # Initialize costs vector
+        self.costs = [1000000] * len(self.nodes) # Initialize costs vector
         minCost = 1000000 # Initializing minimum cost to be a huge number
         finalPath = []
-        for i in range(length(nodes)): # Iterate through possible starting nodes
+        for i in range(len(self.nodes)): # Iterate through possible starting nodes
+            print(f'Iterating over {i}')
+            self.startPt = i
             temp = ""
-            vEdges = temp.zfill(length(self.edges)) # Initialize string of 0s to keep track of visited nodes
+            # vEdges = temp.zfill(len(self.edges)) # Initialize string of 0s to keep track of visited nodes
+            vEdges = [0] * len(self.edges)
             self.path = []
             self.minPath = []
-            dfs(vEdges,i,0,-1) # Enter DFS function at starting node (Initial cost = 0, jump = -1)
-            if costs[i] < minCost: # Check if most recent iteration had the optimal cost
-                minCost = costs[i] # Set minimum cost to most recent cost
-                finalPath = self.minPath # Set optimal path to that of the most recent iteration
+            self.dfs(vEdges,i,0) # Enter DFS function at starting node (Initial cost = 0, jump = -1)
+            print(f'Cost of DFS at {i}: {self.costs[i]}')
+            if self.costs[i] < minCost: # Check if most recent iteration had the optimal cost
+                minCost = self.costs[i] # Set minimum cost to most recent cost
+                finalPath = self.minPath.copy() # Set optimal path to that of the most recent iteration
         self.minPath = finalPath
+        print(f'Pathfinding complete! Final path is: {self.minPath}')
+        self.deNodify()
         self.done = True # Raise done flag
 
     # vEdges   : String of boolean values indicating whether the corresponding edge has been visited. When all values are true, exit.
     # nodeID   : Holds the current state of the recursive function, ie what node it is currently on.
     # cost     : Holds the cost of the working path.
     def dfs(self,vEdges,nodeID,cost):
-        if self.path[-1][1] == -1: # If the node has not been reached as the result of a jump
-            if length(path) > 0: # If this is not the first node
-                cost += self.path[-1][0].getWeight() # Calculate weight of the edge that was just traversed
-                vEdges[self.path[-1][0].id] = 1 # Mark edge as visited
-        else: # If the node has been reached as the result of a jump
-            cost += abs(sqrt((self.nodes[nodeID].x-self.nodes[self.path[-1][1]].x)**2 + (self.nodes[nodeID].y-self.nodes[self.path[-1][1]].y)**2)) # Calculate and add the cost of the jump
-        if vEdges.find('0') == -1: # If all edges have been visited
-            if cost < self.costs[self.path[-1][0]]: # If cost is less than last min
-                self.costs[self.path[-1][0]] = cost # Set cost as new min
-                self.minPath = self.path # Set current path as minPath
+        if len(self.path) > 0: # If this is not the first node
+            if self.path[-1][1] == -1: # If the node has not been reached as the result of a jump
+                cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
+                vEdges[self.path[-1][0]] = 1 # Mark edge as visited
+            else: # If the node has been reached as the result of a jump
+                cost += abs(math.sqrt((self.nodes[nodeID].x-self.nodes[self.path[-1][1]].x)**2 + (self.nodes[nodeID].y-self.nodes[self.path[-1][1]].y)**2)) # Calculate and add the cost of the jump
+        print(f'DFS: Current path is {self.path}, Current cost is {cost}')
+        if 0 not in vEdges: # If all edges have been visited
+            if cost < self.costs[self.startPt]: # If cost is less than last min
+                self.costs[self.startPt] = cost # Set cost as new min
+                self.minPath = self.path.copy() # Set current path as minPath
             return True # Return to last recursion
         validPath = 0 # Preset flag to 0
-        for i in range(length(self.dict[nodeID])): # Check unvisited edges
-            if vEdges[i] == 0: # If edge i is unvisited
-                self.path.append(tuple((self.dict[nodeID][i],-1))) # Add i to path
-                dfs(vEdges,self.dict[nodeID][i].otherNode(nodeID),cost,-1) # Recurse on node opposite of nodeID over edge i
+        for i in range(len(self.dict[nodeID])): # Check unvisited edges
+            if vEdges[self.dict[nodeID][i].id] == 0: # If edge i is unvisited
+                self.path.append(tuple((self.dict[nodeID][i].id,-1))) # Add i to path
+                self.dfs(vEdges,self.dict[nodeID][i].otherNode(nodeID).id,cost) # Recurse on node opposite of nodeID over edge i
                 validPath = 1 # Mark that a valid path was found
         if validPath == 0: # If all edges around nodeID were already visited
-            for i in range(length(self.edges)): # Search over all edges
+            for i in range(len(self.edges)): # Search over all edges
                 if vEdges[i] == 0: # If edge i has not been visited
-                    self.path.append(tuple((self.edges[i],nodeID))) # Add unvisited edge to path
-                    dfs(vEdges,self.edges[i].nodes[0],cost,nodeID) # Jump to and recurse over 1st node of unvisited edge
-                    self.path.append(tuple((self.edges[i],nodeID))) # Add unvisited edge to path
-                    dfs(vEdges,self.edges[i].nodes[1],cost,nodeID) # Jump to and recurse over 2nd node of unvisited edge
-        self.path.pop(-1) # Remove last entry from path
+                    self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
+                    self.dfs(vEdges,self.edges[i].nodes[0].id,cost) # Jump to and recurse over 1st node of unvisited edge
+                    self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
+                    self.dfs(vEdges,self.edges[i].nodes[1].id,cost) # Jump to and recurse over 2nd node of unvisited edge
+        if len(self.path) > 0: # If this is not the first node
+            self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
 
     # Converts edges in the optimized order into gcode
@@ -183,37 +204,54 @@ class Pathfinder:
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
-            return abs(sqrt((nB.x-nA.x)**2 + (nB.y-nA.y)**2))
+            return abs(math.sqrt((nB.x-nA.x)**2 + (nB.y-nA.y)**2))
         else: # NEEDS TO BE FIXED TO HANDLE OVALS
-            radius = abs(sqrt((nA.x-line.center.x)**2 + (nA.y-line.center.y)**2))
+            radius = abs(math.sqrt((nA.x-line.center[0])**2 + (nA.y-line.center[1])**2))
             return line.arc * (math.pi / 180) * radius
 
     def nodify(self):
         print("Convert Lines to Nodes and Edges") # FIX : Include possibility of shared points
         for line in self.segments:
-            self.nodes.append(Node(line.start[0],line.start[1]))
-            self.nodes.append(Node(line.end[0],line.end[1]))
-            self.edges.append(Edge(self.getDistance(line,self.nodes[-1],self.nodes[-2]),[self.nodes[-2],self.nodes[-1]))
-            self.nodes[-2].addEdge(self.edges[-1])
-            self.nodes[-1].addEdge(self.edges[-1])
+            nodeA = -10
+            nodeB = -10
+            for i in range(len(self.nodes)):
+                if self.nodes[i].x == line.start[0] and self.nodes[i].y == line.start[1]:
+                    nodeA = i
+                if self.nodes[i].x == line.end[0] and self.nodes[i].y == line.end[1]:
+                    nodeB = i
+            if nodeA == -10:
+                self.nodes.append(Node(line.start[0],line.start[1]))
+                nodeA = len(self.nodes) - 1
+            if nodeB == -10:
+                self.nodes.append(Node(line.end[0],line.end[1]))
+                nodeB = len(self.nodes) - 1
+            self.edges.append(Edge(self.getDistance(line,self.nodes[nodeA],self.nodes[nodeB]),[self.nodes[nodeA],self.nodes[nodeB]]))
+            self.nodes[nodeA].addEdge(self.edges[-1])
+            self.nodes[nodeB].addEdge(self.edges[-1])
+        print(f'Nodification complete! Nodes: {len(self.nodes)}, Edges: {len(self.edges)}')
 
     def initDictionary(self):
         dict = {}
-        for i in range(length(self.nodes)):
+        for i in range(len(self.nodes)):
             dict[i] = []
             for edge in self.edges:
                 if edge.hasNode(i):
                     dict[i].append(edge)
+        print(f'Dictionary initialized! Contains:')
+        for i in range(len(dict)):
+            print(f'{i} - ')
+            for j in range(len(dict[i])):
+                print(f' {dict[i][j].id}')
         return dict
 
     def deNodify(self):
         print("Convert Nodes and Edges to Lines")
-        newLines = [-1] * length(self.segments)
-        for i in range(length(newLines)):
+        newLines = [-1] * len(self.segments)
+        for i in range(len(newLines)):
             newLines[i] = self.segments[self.minPath[i][0]]
         if newLines[0].start == newLines[1].start or newLines[0].start == newLines[1].end:
             newLines[0].flip()
-        for i in range(length(newLines)-1):
+        for i in range(len(newLines)-1):
             if newLines[i].end != newLines[i+1].start:
                 if self.minPath[i+1][1] == -1:
                     newLines[i+1].flip()
