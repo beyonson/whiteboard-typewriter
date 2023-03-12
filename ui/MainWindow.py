@@ -1,7 +1,21 @@
+import os
+import subprocess
+
+from time import sleep
 from PyQt5 import QtCore, QtGui, QtWidgets, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from TextGrabber import *
+from PyQt5.QtCore import QLibraryInfo
+
+# Deal with redundant libraries
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = QLibraryInfo.location(
+    QLibraryInfo.PluginsPath
+)
+
+# Clear image directories
+subprocess.run("./CleanDirectories.sh")
 
 # Style sheet
 styleSheet = """
@@ -42,6 +56,10 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setupUi()
+        self.location       = [50, 50]
+        self.charsTyped     = 0
+        self.charsCaptured  = 0
+        self.newChar        = False
 
     def setupUi(self):
         self.setObjectName("self")
@@ -68,11 +86,18 @@ class MainWindow(QWidget):
 
         self.editor = QPlainTextEdit(self)
         self.editor.setGeometry(QtCore.QRect(150,30,320,140))
+        self.editor.textChanged.connect(self.charTyped)
 
-        fixedfont = QFontDatabase.systemFont(QFontDatabase.FixedFont)
-        fixedfont.setPointSize(14)
-        self.editor.setFont(fixedfont)
+        font = QFont()
+        font.setFamily('monospace')
+        font.setStyleHint(QFont.Monospace)
+        font.setPointSize(14)
+        self.editor.setFont(font)
         self.editor.show()
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.checkForUpdate)
+        self.timer.start(100)
 
     def fontChanged(self):
         self.editor.clear()
@@ -80,6 +105,14 @@ class MainWindow(QWidget):
         font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
         font.setPointSize(int(fontSize))
         self.editor.setFont(font)
+
+    def charTyped(self):
+        self.charsTyped += 1
+
+    def checkForUpdate(self):
+        if self.charsTyped > self.charsCaptured :
+            scrotChar(self.pos().x() + 155, self.pos().y() + 30, 14, self.charsCaptured)
+            self.charsCaptured += 1
 
 if __name__ == "__main__":
     import sys
