@@ -71,9 +71,7 @@ for i = 1:size(centers,1)
 
     circle_cell{i,1} = [xunit', yunit'];
     circle_cell{i,2} = radii(i);
-    circle_cell{i,3} = centers(i,1);
-    circle_cell{i,4} = centers(i,2);
-
+    circle_cell{i,3} = centers(i);
 
     h = plot(xunit, yunit, 'Color', 'yellow', 'LineWidth', 5);
 end
@@ -100,7 +98,6 @@ for i = 1:size(circle_cell,1)
         circle_cell{i,1} = [];
         circle_cell{i,2} = [];
         circle_cell{i,3} = [];
-        circle_cell{i,4} = [];
     end
 end
 
