@@ -32,7 +32,10 @@ class Line:
         self.end = temp
     def checkDirection(self): # T = CW, F = CCW
         # Check if C is above or below line
-        slope = (self.end[1] - self.start[1]) / (self.end[0] - self.start[0])
+        if self.end[0] - self.start[0] != 0:
+            slope = (self.end[1] - self.start[1]) / (self.end[0] - self.start[0])
+        else:
+            slope = 1000000
         yint = self.start[1] - (slope * self.start[0])
         centerOnLine = (self.center[0] * slope) + yint
         if self.start[0] < self.end[0]:
@@ -99,6 +102,7 @@ class Pathfinder:
         self.startPt = 0 #    startPt        : Integer to keep track of what node was chosen as the starting point.
         self.done = False #   done           : Flag raised when pathfinding has been completed.
         self.gcode = "" #     gcode          : String holding complete gcode for given character.
+        self.standardize()
 
     def pathfind(self):
         self.nodify()
@@ -160,6 +164,52 @@ class Pathfinder:
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
 
+    def standardize(self):
+        max = 0
+        min = 1000000
+        for line in self.segments:
+            if line.start[0] > max:
+                max = line.start[0]
+            if line.start[1] > max:
+                max = line.start[1]
+            if line.end[0] > max:
+                max = line.end[0]
+            if line.end[1] > max:
+                max = line.end[1]
+            if line.start[0] < min:
+                min = line.start[0]
+            if line.start[1] < min:
+                min = line.start[1]
+            if line.end[0] < min:
+                min = line.end[0]
+            if line.end[1] < min:
+                min = line.end[1]
+        if max < 1:
+            return
+        max += max * .1
+        print(f'Max: {max}')
+        print(f'Min: {min}')
+        for line in self.segments:
+            editLineS = list(line.start)
+            editLineE = list(line.end)
+            editLineC = list(line.center)
+            editLineS[0] -= min
+            editLineS[0] /= max
+            editLineS[1] -= min
+            editLineS[1] /= max
+            editLineE[0] -= min
+            editLineE[0] /= max
+            editLineE[1] -= min
+            editLineE[1] /= max
+            if editLineC[0] != -1 or editLineC[1] != -1:
+                editLineC[0] -= min
+                editLineC[0] /= max
+                editLineC[1] -= min
+                editLineC[1] /= max
+            line.start = tuple(editLineS)
+            line.end = tuple(editLineE)
+            line.center = tuple(editLineC)
+
     # Converts edges in the optimized order into gcode
     def convert(self):
         self.gcode = ""
@@ -173,7 +223,7 @@ class Pathfinder:
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
-            else: # TODO: Logic determining CW / CCW
+            else:
                 if line.checkDirection():
                     curLine += "G02 "
                 else:
@@ -197,7 +247,7 @@ class Pathfinder:
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
-            else: # TODO: Logic determining CW / CCW
+            else:
                 if line.checkDirection():
                     curLine += "G02 "
                 else:
