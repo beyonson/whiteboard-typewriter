@@ -2,7 +2,7 @@
 ui/binarized
 ui/chars
 ui/sd
-ui/skeletonized
+#ui/skeletonized
 text-rendering/build/CMakeFiles
 text-rendering/build/external
 
