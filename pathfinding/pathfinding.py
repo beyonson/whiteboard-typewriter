@@ -261,7 +261,7 @@ class Pathfinder:
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
             return abs(math.sqrt((nB.x-nA.x)**2 + (nB.y-nA.y)**2))
-        else: # NEEDS TO BE FIXED TO HANDLE OVALS
+        else:
             radius = abs(math.sqrt((nA.x-line.center[0])**2 + (nA.y-line.center[1])**2))
             return line.arc * (math.pi / 180) * radius
 

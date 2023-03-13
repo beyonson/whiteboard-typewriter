@@ -83,7 +83,7 @@ print("Drawing two arcs (CW/CCW):")
 print(gcode)
 
 ################################################################
-# CURVED LINE TEST: Draw a circle (CW)
+# CURVED LINE TEST: Draw a Circle and Square (CW)
 
 lines = []
 lines.append(Line(.2,.2,.2,.4))
@@ -103,7 +103,7 @@ if pathfinder.checkDone():
     pathfinder.convert()
     gcode = pathfinder.getGCode()
 
-print("Drawing a circle and square:")
+print("Drawing a Circle and Square:")
 print(gcode)
 
 ###############################################################
