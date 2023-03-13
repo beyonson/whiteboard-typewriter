@@ -3,63 +3,55 @@ clc
 close
 
 %% Import image
-img = imread('L.png');
+img = imread('C:\Users\yasse\Desktop\Senior Design\whiteboard-typewriter\ui\skeletonized\ss3.png');
 img = img(:,:,1);
 
-img = imresize(img, 20);
+% img = imresize(img, 2);
 
 %% Skeletonization
-img_log = imbinarize(imcomplement(img));
-img_skel = bwskel(img_log);
+img = imbinarize((img));
+img_skel = img;
 
-%% GHT - Lines
-[H, theta, rho] = hough_lines_acc(img_skel);
-% fig = imshow(imadjust(rescale(H)));
-% xlabel('\theta'), ylabel('\rho');
+BW = img_skel;
+[H,T,R] = hough(BW);
 
-peaks = hough_peaks(H, 10, 'Threshold', 0.25 * max(H(:)), 'NHoodSize', [50 50]);  % defined in hough_peaks.m
+P  = houghpeaks(H,10,'threshold',ceil(0.1*max(H(:))));
+x = T(P(:,2)); y = R(P(:,1));
 
-%% Draw lines
+lines = houghlines(BW,T,R,P,'FillGap',5,'MinLength',7);
+figure, imshow(img_skel), hold on
+max_len = 0;
+for k = 1:length(lines)
+   xy = [lines(k).point1; lines(k).point2];
+   plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+   
+   img_skel(xy(1,2):xy(2,2),xy(1,1):xy(2,1))=0;
 
-fig = imshow(img);
-hold on
+   % Plot beginnings and ends of lines
+   plot(xy(1,1),xy(1,2),'x','LineWidth',2,'Color','yellow');
+   plot(xy(2,1),xy(2,2),'x','LineWidth',2,'Color','red');
 
-line_cell = cell(size(peaks,1), 1);
-
-for i = 1:size(peaks)
-    cur_theta = theta(peaks(i,2));
-    cur_rho = rho(peaks(i,1));
-
-    if cur_theta == 0
-        x1 = cur_rho;
-        x2 = cur_rho;
-        y1 = 1;
-        y2 = size(img_skel,1);
-    else
-        x1 = 1;
-        x2 = size(img_skel,2);
-        y1 = (-cosd(cur_theta)/sind(cur_theta)) + (cur_rho/sind(cur_theta));
-        y2 = (-cosd(cur_theta)/sind(cur_theta))*length(img_skel) + (cur_rho/sind(cur_theta));
-    end
-
-    xunit = linspace(x1, x2, max(abs(x2-x1)+1, abs(y2-y1)+1))';
-    yunit = linspace(y1, y2, max(abs(x2-x1)+1, abs(y2-y1)+1))';
-
-
-    line_cell{i,1} = [xunit, yunit];
-
-    h = plot(xunit, yunit, 'Color', 'green', 'LineWidth', 5);
-
-%     line([x1 x2], [y1 y2], 'Color', 'green', 'LineWidth', 5);
-
+   % Determine the endpoints of the longest line segment
+   len = norm(lines(k).point1 - lines(k).point2);
+   if ( len > max_len)
+      max_len = len;
+      xy_long = xy;
+   end
 end
 
+
+
 %% GHT - Circles
+[centers, radii, votes] = find_circles(img_skel, [20:1:1000], 0.5, 50);
+votes_ratio = votes./radii;
 
-[centers, radii, votes] = find_circles(img_skel, [20:1:400], 0.6, 50);
+centers = centers(votes > (0.6*max(votes)), :);
+radii = radii(votes > (0.6*max(votes)) );
+votes = votes(votes > (0.6*max(votes)) );
+centers = centers(votes > 50, :);
+radii = radii(votes > 50 );
+votes = votes(votes > 50 );
 
-centers = centers(votes > (0.5*max(votes)), :);
-radii = radii(votes > (0.5*max(votes)) );
 
 circle_cell = cell(size(centers,1), 3);
 
@@ -73,88 +65,65 @@ for i = 1:size(centers,1)
     circle_cell{i,2} = radii(i);
     circle_cell{i,3} = centers(i,1);
     circle_cell{i,4} = centers(i,2);
-
+    circle_cell{i,5} = votes(i);
 
     h = plot(xunit, yunit, 'Color', 'yellow', 'LineWidth', 5);
 end
 
-%% Get rid of circles that do not touch lines
+
+%% Circles to Arcs
+[x,y] = find(img_skel);
+arc_cell = cell(size(circle_cell));
+
 for i = 1:size(circle_cell,1)
+    cx = circle_cell{i,3};
+    cy = circle_cell{i,4};
+    r = circle_cell{i,2};
 
-    touches_line = 0;
-    cur_circle = circle_cell{i,1};
+    % Compute distance between circle center and edge points
+    dist = sqrt((y-cx).^2 + (x-cy).^2);
 
-    for j = 1:size(line_cell,1)
-        cur_line = line_cell{j,1};
-        
-        for ii = 1:size(cur_circle,1)
-
-            if ((any(cur_line(:,1) >= cur_circle(ii,1) - 5) && any(cur_line(:,1) <= cur_circle(ii,1) + 5)) && ...
-                    (any(cur_line(:,2) >= cur_circle(ii,2) - 5) && any(cur_line(:,2) <= cur_circle(ii,2) + 5)))
-                touches_line = 1;
-            end
-        end
+    % Determine which edge points are within the circle
+    idx = find(dist < r+2 & dist > r-2);
+    if isempty(idx)
+        continue;
     end
 
-    if (touches_line == 0)
-        circle_cell{i,1} = [];
-        circle_cell{i,2} = [];
-        circle_cell{i,3} = [];
-        circle_cell{i,4} = [];
+    % Get coordinates of overlapping edge points
+    ey = x(idx);
+    ex = y(idx);
+
+%     [idx1, centers1, sumd1] = kmeans([ex,ey], 1);
+    [idx2, centers2, sumd2] = kmeans([ex,ey], 2);
+
+    if ((sqrt((centers2(1,1)-centers2(2,1)).^2 + (centers2(1,2)-centers2(2,2)).^2))) > r
+        ey = ey(idx2 == mode(idx2));
+        ex = ex(idx2 == mode(idx2));
     end
-end
-
-row_has_empty = any(cellfun(@isempty, circle_cell), 2);
-circle_cell(row_has_empty,:) = [];
-
-%% Draw Circles
-th = 0:1:360;
-for i = 1:size(circle_cell,1)
-    h = plot(circle_cell{i,1}(:,1), circle_cell{i,1}(:,2), 'Color', 'green', 'LineWidth', 5);
-end
-
-
-
-[edge_row, edge_col] = find(img_skel==1);
-
-th = 0:1:360;
-for i = 1:size(circle_cell,1)
-
-    cur_circle = circle_cell{i,1};
-    circle_x = [];
-    circle_y = [];
     
-    for ii = 1:size(cur_circle,1)
-        neighborhood = img_skel(floor(cur_circle(ii,2))-5:floor(cur_circle(ii,2))+5, ...
-                                floor(cur_circle(ii,1))-5:floor(cur_circle(ii,1))+5);
-        if (any(any(neighborhood)))
-            circle_x = [circle_x; cur_circle(ii,1)];
-            circle_y = [circle_y; cur_circle(ii,2)];
-        end
-    end
+    % Compute angle of each edge point relative to circle center
+    angles = atan2d(-ey+cy, ex-cx);
+    angles(angles < 0) = angles(angles<0) + 360;
+    [angles, idx] = sort(angles);
+    ey = ey(idx);
+    ex = ex(idx);
 
-    h = plot(circle_x, circle_y, 'Color', 'red', 'LineWidth', 5);
+    arc_cell{i,1} = [ex(1), ey(1)];
+    arc_cell{i,2} = [ex(end), ey(end)];
+    arc_cell{i,3} = [cx, cy];
+    arc_cell{i,4} = angles;
+    arc_cell{i,5} = abs(angles(1) - angles(end));
+
 end
 
+%% Draw Arcs
+for i = 1:size(arc_cell,1)
+    radius = norm(arc_cell{i,3} - arc_cell{i,2});
+    theta = arc_cell{i,4};
+    x = arc_cell{i,3}(1) + radius * cosd(theta);
+    y = arc_cell{i,3}(2) - radius * sind(theta);
 
-%% Draw Lines
-for i = 1:size(line_cell,1)
-
-    cur_line = line_cell{i,1};
-    line_x = [];
-    line_y = [];
-
-    for ii = 1:size(cur_line,1)
-        if (floor(cur_line(ii,2)) < size(img_skel,1)) && (floor(cur_line(ii,1)) < size(img_skel,2) && floor(cur_line(ii,2)) > 0 && floor(cur_line(ii,1)) > 0)
-            if (img_skel(floor(cur_line(ii,2)),floor(cur_line(ii,1))) == 1)
-                line_x = [line_x; cur_line(ii,1)];
-                line_y = [line_y; cur_line(ii,2)];
-            end
-        end
-
-    end
-
-    h = plot(line_x, line_y, 'Color', 'red', 'LineWidth', 5);
+    % Plot the arc using the plot function
+    plot(x, y, 'Color', 'red', 'LineWidth', 5);
 end
-
 
