@@ -2,9 +2,9 @@ from pathfinding import *
 
 # STRAIGHT LINE TEST: Draw a box
 lines = []
-lines.append(Line(.2,.2,.2,.4))
+lines.append(Line(.199,.2,.2,.4))
 lines.append(Line(.4,.2,.2,.2))
-lines.append(Line(.2,.4,.4,.4))
+lines.append(Line(.2,.4,.4,.4001))
 lines.append(Line(.4,.4,.4,.2))
 
 pathfinder = Pathfinder(lines)

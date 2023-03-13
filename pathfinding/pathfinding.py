@@ -103,6 +103,7 @@ class Pathfinder:
         self.done = False #   done           : Flag raised when pathfinding has been completed.
         self.gcode = "" #     gcode          : String holding complete gcode for given character.
         self.standardize()
+        self.snap()
 
     def pathfind(self):
         self.nodify()
@@ -164,6 +165,26 @@ class Pathfinder:
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
 
+    def snap(self,sensitivity=.005):
+        for i in range(len(self.segments)):
+            for j in range(i+1,len(self.segments)):
+                dist = self.getPointDistance(self.segments[i].start,self.segments[j].start)
+                if dist < sensitivity and dist != 0:
+                    self.segments[i].start = self.segments[j].start
+                    continue
+                dist = self.getPointDistance(self.segments[i].start,self.segments[j].end)
+                if dist < sensitivity and dist != 0:
+                    self.segments[i].start = self.segments[j].end
+                    continue
+                dist = self.getPointDistance(self.segments[i].end,self.segments[j].start)
+                if dist < sensitivity and dist != 0:
+                    self.segments[i].end = self.segments[j].start
+                    continue
+                dist = self.getPointDistance(self.segments[i].end,self.segments[j].end)
+                if dist < sensitivity and dist != 0:
+                    self.segments[i].end = self.segments[j].end
+                    continue
+
     def standardize(self):
         max = 0
         min = 1000000
@@ -187,8 +208,6 @@ class Pathfinder:
         if max < 1:
             return
         max += max * .1
-        print(f'Max: {max}')
-        print(f'Min: {min}')
         for line in self.segments:
             editLineS = list(line.start)
             editLineE = list(line.end)
@@ -264,6 +283,9 @@ class Pathfinder:
         else:
             radius = abs(math.sqrt((nA.x-line.center[0])**2 + (nA.y-line.center[1])**2))
             return line.arc * (math.pi / 180) * radius
+
+    def getPointDistance(self,a,b):
+        return abs(math.sqrt((b[1]-a[1])**2 + (b[0]-a[0])**2))
 
     def nodify(self):
         self.xPrint("Convert Lines to Nodes and Edges") # FIX : Include possibility of shared points
