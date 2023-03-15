@@ -1,10 +1,12 @@
 from pathfinding import *
 
+cadet = SpaceCadet(1)
+
 # STRAIGHT LINE TEST: Draw a box
 lines = []
-lines.append(Line(.2,.2,.2,.4))
+lines.append(Line(.199,.2,.2,.4))
 lines.append(Line(.4,.2,.2,.2))
-lines.append(Line(.2,.4,.4,.4))
+lines.append(Line(.2,.4,.4,.4001))
 lines.append(Line(.4,.4,.4,.2))
 
 pathfinder = Pathfinder(lines)
@@ -12,11 +14,12 @@ pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
-    pathfinder.convert()
+    pathfinder.convert(cadet)
     gcode = pathfinder.getGCode()
 
 print("Drawing box:")
 print(gcode)
+cadet.step()
 
 ################################################################
 # CURVED LINE TEST: Draw a circle (CW)
@@ -36,11 +39,12 @@ pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
-    pathfinder.convert()
+    pathfinder.convert(cadet)
     gcode = pathfinder.getGCode()
 
 print("Drawing circle (CW):")
 print(gcode)
+cadet.step()
 
 ################################################################
 # CURVED LINE TEST: Draw a semicircle (CCW)
@@ -56,11 +60,12 @@ pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
-    pathfinder.convert()
+    pathfinder.convert(cadet)
     gcode = pathfinder.getGCode()
 
 print("Drawing semicircle (CCW):")
 print(gcode)
+cadet.step()
 
 ################################################################
 # CURVED LINE PICKUP TEST: Draw two arcs
@@ -76,14 +81,15 @@ pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
-    pathfinder.convert()
+    pathfinder.convert(cadet)
     gcode = pathfinder.getGCode()
 
 print("Drawing two arcs (CW/CCW):")
 print(gcode)
+cadet.step()
 
 ################################################################
-# CURVED LINE TEST: Draw a circle (CW)
+# CURVED LINE TEST: Draw a Circle and Square (CW)
 
 lines = []
 lines.append(Line(.2,.2,.2,.4))
@@ -100,11 +106,12 @@ pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
-    pathfinder.convert()
+    pathfinder.convert(cadet)
     gcode = pathfinder.getGCode()
 
-print("Drawing a circle and square:")
+print("Drawing a Circle and Square:")
 print(gcode)
+cadet.step()
 
 ###############################################################
 # SIMPLE LETTER TEST: Drawing L
@@ -119,8 +126,9 @@ pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
-    pathfinder.convert()
+    pathfinder.convert(cadet)
     gcode = pathfinder.getGCode()
 
 print("Drawing the letter L:")
 print(gcode)
+cadet.step()

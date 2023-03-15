@@ -9,6 +9,7 @@
 # G28: Return home
 
 import math
+from SpaceCadet import *
 
 def clean():
     Edge.resetCounter()
@@ -103,6 +104,7 @@ class Pathfinder:
         self.done = False #   done           : Flag raised when pathfinding has been completed.
         self.gcode = "" #     gcode          : String holding complete gcode for given character.
         self.standardize()
+        self.snap()
 
     def pathfind(self):
         self.nodify()
@@ -164,6 +166,26 @@ class Pathfinder:
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
 
+    def snap(self,sensitivity=.005):
+        for i in range(len(self.segments)):
+            for j in range(i+1,len(self.segments)):
+                dist = self.getPointDistance(self.segments[i].start,self.segments[j].start)
+                if dist < sensitivity and dist != 0:
+                    self.segments[i].start = self.segments[j].start
+                    continue
+                dist = self.getPointDistance(self.segments[i].start,self.segments[j].end)
+                if dist < sensitivity and dist != 0:
+                    self.segments[i].start = self.segments[j].end
+                    continue
+                dist = self.getPointDistance(self.segments[i].end,self.segments[j].start)
+                if dist < sensitivity and dist != 0:
+                    self.segments[i].end = self.segments[j].start
+                    continue
+                dist = self.getPointDistance(self.segments[i].end,self.segments[j].end)
+                if dist < sensitivity and dist != 0:
+                    self.segments[i].end = self.segments[j].end
+                    continue
+
     def standardize(self):
         max = 0
         min = 1000000
@@ -187,8 +209,6 @@ class Pathfinder:
         if max < 1:
             return
         max += max * .1
-        print(f'Max: {max}')
-        print(f'Min: {min}')
         for line in self.segments:
             editLineS = list(line.start)
             editLineE = list(line.end)
@@ -211,15 +231,16 @@ class Pathfinder:
             line.center = tuple(editLineC)
 
     # Converts edges in the optimized order into gcode
-    def convert(self):
+    def convert(self,spacer):
         self.gcode = ""
         curLine = ""
         lastPoint = (0,0)
-        self.gcode += "G01 X0 Y0 Z0\n"
+        start = spacer.plot(lastPoint)
+        self.gcode += "G01 X" + str(start[0]) + " Y" + str(start[1]) + " Z0\n"
         for line in self.segments:
             curLine = ""
             if line.checkPickup(lastPoint):
-                curLine += "G01 X" + str(line.start[0]) + " Y" + str(line.start[1]) + " Z0\n"
+                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
@@ -228,22 +249,23 @@ class Pathfinder:
                     curLine += "G02 "
                 else:
                     curLine += "G03 "
-            curLine += "X" + str(line.end[0]) + " Y" + str(line.end[1]) + " Z1"
+            curLine += "X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z1"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
 
     # Variant of convert function that keeps the Z value set to 0 for debugging purposes.
-    def convertConstZ(self):
+    def convertConstZ(self,spacer):
         self.gcode = ""
         curLine = ""
         lastPoint = (0,0)
-        self.gcode += "G01 X0 Y0 Z0\n"
+        start = spacer.plot(lastPoint)
+        self.gcode += "G01 X" + str(start[0]) + " Y" + str(start[1]) + " Z0\n"
         for line in self.segments:
             curLine = ""
             if line.checkPickup(lastPoint):
-                curLine += "G01 X" + str(line.start[0]) + " Y" + str(line.start[1]) + " Z0\n"
+                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
@@ -252,7 +274,7 @@ class Pathfinder:
                     curLine += "G02 "
                 else:
                     curLine += "G03 "
-            curLine += "X" + str(line.end[0]) + " Y" + str(line.end[1]) + " Z0"
+            curLine += "X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z0"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
@@ -261,9 +283,12 @@ class Pathfinder:
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
             return abs(math.sqrt((nB.x-nA.x)**2 + (nB.y-nA.y)**2))
-        else: # NEEDS TO BE FIXED TO HANDLE OVALS
+        else:
             radius = abs(math.sqrt((nA.x-line.center[0])**2 + (nA.y-line.center[1])**2))
             return line.arc * (math.pi / 180) * radius
+
+    def getPointDistance(self,a,b):
+        return abs(math.sqrt((b[1]-a[1])**2 + (b[0]-a[0])**2))
 
     def nodify(self):
         self.xPrint("Convert Lines to Nodes and Edges") # FIX : Include possibility of shared points
