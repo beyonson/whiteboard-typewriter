@@ -9,6 +9,7 @@
 # G28: Return home
 
 import math
+from SpaceCadet import *
 
 def clean():
     Edge.resetCounter()
@@ -230,15 +231,16 @@ class Pathfinder:
             line.center = tuple(editLineC)
 
     # Converts edges in the optimized order into gcode
-    def convert(self):
+    def convert(self,spacer):
         self.gcode = ""
         curLine = ""
         lastPoint = (0,0)
-        self.gcode += "G01 X0 Y0 Z0\n"
+        start = spacer.plot(lastPoint)
+        self.gcode += "G01 X" + str(start[0]) + " Y" + str(start[1]) + " Z0\n"
         for line in self.segments:
             curLine = ""
             if line.checkPickup(lastPoint):
-                curLine += "G01 X" + str(line.start[0]) + " Y" + str(line.start[1]) + " Z0\n"
+                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
@@ -247,22 +249,23 @@ class Pathfinder:
                     curLine += "G02 "
                 else:
                     curLine += "G03 "
-            curLine += "X" + str(line.end[0]) + " Y" + str(line.end[1]) + " Z1"
+            curLine += "X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z1"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
 
     # Variant of convert function that keeps the Z value set to 0 for debugging purposes.
-    def convertConstZ(self):
+    def convertConstZ(self,spacer):
         self.gcode = ""
         curLine = ""
         lastPoint = (0,0)
-        self.gcode += "G01 X0 Y0 Z0\n"
+        start = spacer.plot(lastPoint)
+        self.gcode += "G01 X" + str(start[0]) + " Y" + str(start[1]) + " Z0\n"
         for line in self.segments:
             curLine = ""
             if line.checkPickup(lastPoint):
-                curLine += "G01 X" + str(line.start[0]) + " Y" + str(line.start[1]) + " Z0\n"
+                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
@@ -271,7 +274,7 @@ class Pathfinder:
                     curLine += "G02 "
                 else:
                     curLine += "G03 "
-            curLine += "X" + str(line.end[0]) + " Y" + str(line.end[1]) + " Z0"
+            curLine += "X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z0"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
