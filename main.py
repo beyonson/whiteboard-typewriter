@@ -9,7 +9,7 @@ pathfindingThread = Thread(target=pathfindingProcess, args(3,))
 
 segmentationQueue = queue.Queue()
 pathfindingQueue = queue.Queue()
-serialToMotor = serial.Serial('port')
+serialToMotor = serial.Serial('COM3')
 
 charPreProcThread.start()
 segmentationThread.start()
@@ -44,4 +44,4 @@ def pathfindingProcess():
             pathfinder = Pathfinder(lines)
             pathfinder.pathfind()
             pathfinder.convert()
-            serialToMotor(pathfinder.getGCode())
+            serialToMotor.write(pathfinder.getGCode())
