@@ -3,7 +3,7 @@ clc
 close
 
 %% Import image
-img = imread('C:\Users\yasse\Desktop\Senior Design\whiteboard-typewriter\ui\skeletonized\ss3.png');
+img = imread('C:\Users\yasse\Desktop\Senior Design\whiteboard-typewriter\ui\skeletonized\ss2.png');
 img = img(:,:,1);
 
 % img = imresize(img, 2);
@@ -93,20 +93,23 @@ for i = 1:size(circle_cell,1)
     ey = x(idx);
     ex = y(idx);
 
-%     [idx1, centers1, sumd1] = kmeans([ex,ey], 1);
-    [idx2, centers2, sumd2] = kmeans([ex,ey], 2);
-
-    if ((sqrt((centers2(1,1)-centers2(2,1)).^2 + (centers2(1,2)-centers2(2,2)).^2))) > r
-        ey = ey(idx2 == mode(idx2));
-        ex = ex(idx2 == mode(idx2));
-    end
+% %     [idx1, centers1, sumd1] = kmeans([ex,ey], 1);
+%     [idx2, centers2, sumd2] = kmeans([ex,ey], 2);
+% 
+%     if ((sqrt((centers2(1,1)-centers2(2,1)).^2 + (centers2(1,2)-centers2(2,2)).^2))) > r
+%         ey = ey(idx2 == mode(idx2));
+%         ex = ex(idx2 == mode(idx2));
+%     end
     
     % Compute angle of each edge point relative to circle center
     angles = atan2d(-ey+cy, ex-cx);
-    angles(angles < 0) = angles(angles<0) + 360;
+%     angles(angles < 0) = angles(angles<0) + 360;
     [angles, idx] = sort(angles);
     ey = ey(idx);
     ex = ex(idx);
+
+    angles(1)
+    angles(end)
 
     arc_cell{i,1} = [ex(1), ey(1)];
     arc_cell{i,2} = [ex(end), ey(end)];
