@@ -15,6 +15,12 @@ def clean():
     Edge.resetCounter()
     Node.resetCounter()
 
+class PathfindingPackage:
+    def __init__(self,lines,letter,font):
+        self.lines = lines
+        self.letter = letter
+        self.font = font
+
 class Line:
     def __init__(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
         self.start = (startX,startY)
