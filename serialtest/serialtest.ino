@@ -5,6 +5,7 @@ void setup() {
 void loop() {
   while(Serial.available()) {
     String line = Serial.readString();
+    Serial.print(line);
     // Motor Control
   }
 }

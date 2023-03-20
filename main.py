@@ -3,6 +3,7 @@ from queue import Queue
 import serial
 from pathfinding import *
 from character_segmentation import *
+from CharacterCache import *
 
 charPreProcThread = Thread(target=charPreProcProcess, args(1,))
 segmentationThread = Thread(target=segmentationProcess, args(2,))
@@ -10,6 +11,7 @@ pathfindingThread = Thread(target=pathfindingProcess, args(3,))
 
 segmentationQueue = queue.Queue()
 pathfindingQueue = queue.Queue()
+cacheQueue = queue.Queue()
 serialToMotor = serial.Serial('COM3')
 
 charPreProcThread.start()
@@ -21,9 +23,9 @@ pathfindingThread.start()
 
 def charPreProcProcess():
 #   When letter recieved:
+#       Check if letter is in character cache
 #       Do skeletonization
 #       Add output to segmentation queue
-
 
 ###################################################
 ##      THREAD 2 : CHARACTER SEGMENTATION        ##
@@ -63,6 +65,8 @@ def pathfindingProcess():
     while True:
         while not pathfindingQueue.empty():
             lines = pathfindingQueue.get()
+            if lines == "Dummy":
+                lines == cacheQueue.get()
             pathfinder = Pathfinder(lines)
             pathfinder.pathfind()
             pathfinder.convert()
