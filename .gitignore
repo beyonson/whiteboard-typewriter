@@ -2,9 +2,8 @@
 ui/binarized
 ui/chars
 ui/sd
-ui/skeletonized
-text-rendering/build/CMakeFiles
-text-rendering/build/external
+#ui/skeletonized
+motorcontorl/env/*
 
 # all
 __pycache__/

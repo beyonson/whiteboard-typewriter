@@ -4,7 +4,7 @@ import numpy as np
 def processChar(path):
     image1 = cv2.imread('./chars/' + path) 
     img = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
-    ret, thresh1 = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY_INV)
+    ret, thresh1 = cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)
     cv2.imwrite('./binarized/' + path, thresh1)
 
     size = np.size(thresh1)
@@ -19,3 +19,6 @@ def processChar(path):
     cv2.imwrite("./skeletonized/" + path, skel)
     if cv2.waitKey(0) & 0xff == 27: 
         cv2.destroyAllWindows() 
+
+for i in range(1,14):
+    processChar('ss' + str(i) + '.png')
