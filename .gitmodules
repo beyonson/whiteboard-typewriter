@@ -1,0 +1,3 @@
+[submodule "opengl-text-editor"]
+	path = opengl-text-editor
+	url = https://github.com/beyonson/opengl-text-editor.git 
