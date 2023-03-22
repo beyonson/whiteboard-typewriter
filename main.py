@@ -1,30 +1,19 @@
 from threading import Thread
 from queue import Queue
+import sys
 import serial
-from pathfinding import *
+import time
 from character_segmentation import *
 from CharacterCache import *
-
-charPreProcThread = Thread(target=charPreProcProcess, args(1,))
-segmentationThread = Thread(target=segmentationProcess, args(2,))
-pathfindingThread = Thread(target=pathfindingProcess, args(3,))
-serialThread = Thread(target=serialProcess, args(4,))
-
-segmentationQueue = queue.Queue()
-pathfindingQueue = queue.Queue()
-serialQueue = queue.Queue()
-cacheQueue = queue.Queue()
-serialToMotor = serial.Serial('COM3')
-
-charPreProcThread.start()
-segmentationThread.start()
-pathfindingThread.start()
-serialThread.start()
+sys.path.insert(0, './pathfinding')
+from pathfinding import *
+from SpaceCadet import *
 
 ###################################################
 ##      THREAD 1 : CHARACTER PREPROCESSING       ##
 
 def charPreProcProcess():
+    print("Placeholder")
 #   When letter recieved:
 #       Check if letter is in character cache
 #       Do skeletonization
@@ -68,7 +57,8 @@ def pathfindingProcess():
     spacer = SpaceCadet(1)
     while True:
         while not pathfindingQueue.empty():
-            lines = pathfindingQueue.get()
+            package = pathfindingQueue.get()
+            lines = package.lines
             if lines == "Dummy":
                 lines == cacheQueue.get()
             pathfinder = Pathfinder(lines)
@@ -84,6 +74,31 @@ def serialProcess():
     while True:
         while not serialQueue.empty():
             gcode = serialQueue.get()
-            for line in gcode.splitLines():
-                serialToMotor.write(str.encode(line))
+            for line in gcode.splitlines():
+                line = line.strip()
+                print(f'Sending: {line}')
+                serialToMotor.write(str.encode(line + '\n'))
                 ack = serialToMotor.readline()
+                print(f' : {ack.strip()}')
+
+####################################################
+
+charPreProcThread = Thread(target=charPreProcProcess)
+segmentationThread = Thread(target=segmentationProcess)
+pathfindingThread = Thread(target=pathfindingProcess)
+serialThread = Thread(target=serialProcess)
+
+segmentationQueue = Queue()
+pathfindingQueue = Queue()
+serialQueue = Queue()
+cacheQueue = Queue()
+
+serialToMotor = serial.Serial('COM3')
+serialToMotor.write(str.encode("\r\n\r\n"))
+time.sleep(2)   # Wait for grbl to initialize
+serialToMotor.flushInput()  # Flush startup text in serial input
+
+charPreProcThread.start()
+segmentationThread.start()
+pathfindingThread.start()
+serialThread.start()

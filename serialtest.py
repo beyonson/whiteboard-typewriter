@@ -12,7 +12,7 @@ import time
 s = serial.Serial('COM3',9600)
 
 # Open g-code file
-f = open('sample.gcode','r');
+f = open('singleline.gcode','r');
 
 # Wake up grbl
 s.write(str.encode("\r\n\r\n"))
