@@ -12,8 +12,8 @@ serialThread = Thread(target=serialProcess, args(4,))
 
 segmentationQueue = queue.Queue()
 pathfindingQueue = queue.Queue()
-cacheQueue = queue.Queue()
 serialQueue = queue.Queue()
+cacheQueue = queue.Queue()
 serialToMotor = serial.Serial('COM3')
 
 charPreProcThread.start()
@@ -65,6 +65,7 @@ def segmentationProcess():
 ##      THREAD 3 : PATHFINDING                   ##
 
 def pathfindingProcess():
+    spacer = SpaceCadet(1)
     while True:
         while not pathfindingQueue.empty():
             lines = pathfindingQueue.get()
@@ -72,8 +73,9 @@ def pathfindingProcess():
                 lines == cacheQueue.get()
             pathfinder = Pathfinder(lines)
             pathfinder.pathfind()
-            pathfinder.convert()
+            pathfinder.convert(spacer)
             serialQueue.put(pathfinder.getGCode())
+            spacer.step()
 
 ###################################################
 ##      THREAD 4 : SERIAL                        ##
