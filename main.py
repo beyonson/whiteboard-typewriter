@@ -8,15 +8,18 @@ from CharacterCache import *
 charPreProcThread = Thread(target=charPreProcProcess, args(1,))
 segmentationThread = Thread(target=segmentationProcess, args(2,))
 pathfindingThread = Thread(target=pathfindingProcess, args(3,))
+serialThread = Thread(target=serialProcess, args(4,))
 
 segmentationQueue = queue.Queue()
 pathfindingQueue = queue.Queue()
 cacheQueue = queue.Queue()
+serialQueue = queue.Queue()
 serialToMotor = serial.Serial('COM3')
 
 charPreProcThread.start()
 segmentationThread.start()
 pathfindingThread.start()
+serialThread.start()
 
 ###################################################
 ##      THREAD 1 : CHARACTER PREPROCESSING       ##
@@ -70,4 +73,15 @@ def pathfindingProcess():
             pathfinder = Pathfinder(lines)
             pathfinder.pathfind()
             pathfinder.convert()
-            serialToMotor.write(pathfinder.getGCode())
+            serialQueue.put(pathfinder.getGCode())
+
+###################################################
+##      THREAD 4 : SERIAL                        ##
+
+def serialProcess():
+    while True:
+        while not serialQueue.empty():
+            gcode = serialQueue.get()
+            for line in gcode.splitLines():
+                serialToMotor.write(str.encode(line))
+                ack = serialToMotor.readline()
