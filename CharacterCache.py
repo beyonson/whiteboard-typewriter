@@ -60,3 +60,6 @@ class CharacterCache:
         return gcode
     def getFrequency(self,letter):
         return self.letterFreq[letter]
+    def clear(self):
+        self.cache = []
+        self.priority = []

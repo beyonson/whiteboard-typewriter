@@ -23,7 +23,6 @@ def charPreProcProcess():
 
     #################
 
-    print("Placeholder")
 #   When letter recieved:
 #       Check if letter is in character cache
 #       Do skeletonization
@@ -117,7 +116,7 @@ def pathfindingProcess():
         while not pathfindingQueue.empty():
             package = pathfindingQueue.get()
             lines = package.lines
-            if lines == "Dummy":
+            if package.letter == "Dummy":
                 lines == cacheQueue.get()
             pathfinder = Pathfinder(lines)
             pathfinder.pathfind()
