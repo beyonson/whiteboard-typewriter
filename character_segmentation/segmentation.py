@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
 from scipy.ndimage import generate_binary_structure, maximum_filter
 from scipy.spatial.distance import cdist
-import math
+import os
 
 def hough_peaks(H, numpeaks=1, threshold=None, nHoodSize=None):
     # Set default values
@@ -138,7 +138,6 @@ def find_arcs(centers, radii, votes, img):
 
         # Determine which cluster contains the majority of the skeleton pixels
         if np.sqrt((kcenters[0][1] - kcenters[1][1])**2 + (kcenters[0][0] - kcenters[1][0])**2) > r/2:
-            print(kcenters)
             majority_label = np.argmax(np.bincount(labels))
 
             # Extract the coordinates of the skeleton pixels in the majority cluster
@@ -156,11 +155,8 @@ def find_arcs(centers, radii, votes, img):
         start_idx = (ex[0], ey[0])
         end_idx = (ex[-1], ey[-1])
 
-        print(start_angle)
-        print(end_angle)
-
         # Add the arc to the list
-        arc_list.append((cx, cy, r, start_angle, end_angle, start_idx, end_idx))
+        arc_list.append([(cx, cy), r[0], start_angle, end_angle, start_idx, end_idx])
 
     return arc_list
 
@@ -174,38 +170,45 @@ def find_lines(img):
 
     return line_segments
 
-img = cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png", cv2.THRESH_BINARY)
 
-line_segments = find_lines(img)
+if __name__ == "__main__":
 
-fig, ax = plt.subplots()
-# ax.imshow(cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png"))
-for line in line_segments:
-    x1, y1 = line[0]
-    x2, y2 = line[1]
-    ax.plot([x1, x2], [y1, y2], color='r')
+    img = cv2.imread(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile68.bmp"), cv2.THRESH_BINARY)
+
+    line_segments = find_lines(img)
+
+    fig, ax = plt.subplots()
+    # ax.imshow(cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png"))
+    for line in line_segments:
+        x1, y1 = line[0]
+        x2, y2 = line[1]
+        ax.plot([x1, x2], [y1, y2], color='r')
 
 
-centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
-good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([60])[0])
-centers = centers[np.squeeze(good_circles)]
-radii = radii[good_circles]
-votes = np.take(votes, np.where(good_circles))[0]
+    centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
+    good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([60])[0])
+    centers = centers[np.squeeze(good_circles)]
+    radii = radii[good_circles]
+    votes = np.take(votes, np.where(good_circles))[0]
 
-arc_list = find_arcs(centers, radii, votes, img)
+    arc_list = find_arcs(centers, radii, votes, img)
 
-# Iterate over arc_list and draw arcs on image
-for arc in arc_list:
-    cx, cy, r, start_angle, end_angle, start_idx, end_idx = arc
-    thickness = 5
-    color = (255, 255, 255) # Red color
+    # Iterate over arc_list and draw arcs on image
+    for arc in arc_list:
+        center, r, start_angle, end_angle, start_idx, end_idx = arc
+        thickness = 5
+        color = (255, 255, 255) # Red color
 
-    center = (int(cx), int(cy))
+        # center = (int(cx), int(cy))
 
-    # Draw arc on image
-    cv2.circle(img, center, int(r), (255,255,255), 2)
-    cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
+        # Draw arc on image
+        cv2.circle(img, center, int(r), (255,255,255), 2)
+        cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
 
-# Display image with circles
-plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-plt.show()
+
+    print(arc_list)
+    print(line_segments)
+
+    # Display image with circles
+    plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    plt.show()
