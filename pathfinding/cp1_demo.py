@@ -16,7 +16,7 @@ lines.append(Line(.2,.4,.4,.4001))
 lines.append(Line(.4,.4,.4,.2))
 
 pathfinder = Pathfinder(lines)
-pathfinder.setVerbosity(False)
+pathfinder.setVerbosity(True)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
@@ -45,6 +45,10 @@ lines.append(Line(.5,.4,.4,.3,.4,.4,90)) # 3
 lines.append(Line(.3,.4,.4,.5,.4,.4,90)) # 1
 lines.append(Line(.4,.5,.5,.4,.4,.4,90)) # 2
 lines.append(Line(.4,.3,.3,.4,.4,.4,90)) # 4
+lines.append(Line(.7,.6,.6,.5,.6,.6,90)) # 3
+lines.append(Line(.5,.6,.6,.7,.6,.6,90)) # 1
+lines.append(Line(.6,.7,.7,.6,.6,.6,90)) # 2
+lines.append(Line(.6,.5,.5,.6,.6,.6,90)) # 4
 
 pathfinder = Pathfinder(lines)
 pathfinder.setVerbosity(False)
@@ -134,7 +138,7 @@ lines.append(Line(563.456,1376.21,563.456,876.21))
 lines.append(Line(563.456,1376.21,628.234,1427.96,626,1364,51.75))
 
 pathfinder = Pathfinder(lines)
-pathfinder.setVerbosity(False)
+pathfinder.setVerbosity(True)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():

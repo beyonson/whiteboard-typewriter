@@ -66,6 +66,8 @@ class Node:
         Node.__COUNTER += 1
     def addEdge(self,edge):
         self.edges.append(edge)
+    def coords(self):
+        return (self.x,self.y)
     @classmethod
     def resetCounter(cls):
         cls.__COUNTER = 0
@@ -78,7 +80,7 @@ class Edge:
         self.id = Edge.__COUNTER
         Edge.__COUNTER += 1
     def otherNode(self,node):
-        if self.nodes[0] == node:
+        if self.nodes[0].id == node.id:
             return self.nodes[1]
         else:
             return self.nodes[0]
@@ -116,21 +118,29 @@ class Pathfinder:
         self.nodify()
         self.dict = self.initDictionary() # Initialize dictionary data structure for pathfinding
         self.costs = [1000000] * len(self.nodes) # Initialize costs vector
-        minCost = 1000000 # Initializing minimum cost to be a huge number
+        self.minCost = 1000000 # Initializing minimum cost to be a huge number
         finalPath = []
-        for i in range(len(self.nodes)): # Iterate through possible starting nodes
-            self.xPrint(f'Iterating over {i}')
-            self.startPt = i
+        startPoints = self.findStart()
+        if len(startPoints) == 0:
+            startPoints = self.nodes
+        for i in range(len(startPoints)): # Iterate through possible starting nodes
+            self.xPrint(f'Iterating over {startPoints[i].id}')
+            self.startPt = startPoints[i].id
             temp = ""
-            # vEdges = temp.zfill(len(self.edges)) # Initialize string of 0s to keep track of visited nodes
             vEdges = [0] * len(self.edges)
             self.path = []
             self.minPath = []
-            self.dfs(vEdges[:],i,0) # Enter DFS function at starting node (Initial cost = 0, jump = -1)
-            self.xPrint(f'Cost of DFS at {i}: {self.costs[i]}')
-            if self.costs[i] < minCost: # Check if most recent iteration had the optimal cost
-                minCost = self.costs[i] # Set minimum cost to most recent cost
+            self.dfs(vEdges[:],startPoints[i].id,0) # Enter DFS function at starting node (Initial cost = 0, jump = -1)
+            self.xPrint(f'Cost of DFS at {startPoints[i].id}: {self.costs[self.startPt]}. Path was {self.minPath}')
+            if self.costs[self.startPt] < self.minCost: # Check if most recent iteration had the optimal cost
+                self.minCost = self.costs[i] # Set minimum cost to most recent cost
                 finalPath = self.minPath.copy() # Set optimal path to that of the most recent iteration
+            ideal = True
+            for step in finalPath:
+                if step[1] != -1:
+                    ideal = False
+            if ideal:
+                break
         self.minPath = finalPath
         self.xPrint(f'Pathfinding complete! Final path is: {self.minPath}')
         self.deNodify()
@@ -148,18 +158,18 @@ class Pathfinder:
                 cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
                 cost += abs(math.sqrt((self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).x-self.nodes[self.path[-1][1]].x)**2 + (self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).y-self.nodes[self.path[-1][1]].y)**2)) # Calculate and add the cost of the jump
                 vEdges[self.path[-1][0]] = 1 # Mark edge as visited
-        self.xPrint(f'DFS: Path: {self.path}, Cost: {cost}, vEdges: {vEdges}')
+        #self.xPrint(f'DFS: Path: {self.path}, CurrentNode: {nodeID}, Cost: {cost}, vEdges: {vEdges}')
         if 0 not in vEdges: # If all edges have been visited
             if cost < self.costs[self.startPt]: # If cost is less than last min
                 self.costs[self.startPt] = cost # Set cost as new min
                 self.minPath = self.path.copy() # Set current path as minPath
             self.path.pop(-1) # Remove last entry from path
             return True # Return to last recursion
-        validPath = 0 # Preset flag to 0
+        validPath = 0 # Preset flag to 0)
         for i in range(len(self.dict[nodeID])): # Check unvisited edges
             if vEdges[self.dict[nodeID][i].id] == 0: # If edge i is unvisited
                 self.path.append(tuple((self.dict[nodeID][i].id,-1))) # Add i to path
-                self.dfs(vEdges[:],self.dict[nodeID][i].otherNode(nodeID).id,cost) # Recurse on node opposite of nodeID over edge i
+                self.dfs(vEdges[:],self.dict[nodeID][i].otherNode(self.nodes[nodeID]).id,cost) # Recurse on node opposite of nodeID over edge i
                 validPath = 1 # Mark that a valid path was found
         if validPath == 0: # If all edges around nodeID were already visited
             for i in range(len(self.edges)): # Search over all edges
@@ -331,20 +341,43 @@ class Pathfinder:
                 self.xPrint(f' {dict[i][j].id}')
         return dict
 
+    def findStart(self):
+        instances = {}
+        startPoints = []
+        for edge in self.edges:
+            for node in edge.nodes:
+                if node.id in instances:
+                    instances[node.id] += 1
+                else:
+                    instances[node.id] = 1
+        for i in range(len(instances)):
+            if instances[i] < 2:
+                startPoints.append(self.nodes[i])
+        self.xPrint(instances)
+        return startPoints
+
     def deNodify(self):
         self.xPrint("Convert Nodes and Edges to Lines")
-        newLines = [-1] * len(self.segments)
-        for i in range(len(newLines)):
-            newLines[i] = self.segments[self.minPath[i][0]]
-        if newLines[0].start == newLines[1].start or newLines[0].start == newLines[1].end:
-            newLines[0].flip()
-        for i in range(len(newLines)-1):
-            if newLines[i].end != newLines[i+1].start:
-                if self.minPath[i+1][1] == -1:
-                    newLines[i+1].flip()
-                elif newLines[i+1].start[0] != self.nodes[self.minPath[i+1][1]].x or newLines[i+1].start[1] != self.nodes[self.minPath[i+1][1]].y:
-                    newLines[i+1].flip()
-        self.segments = newLines
+        orderedLines = [-1] * len(self.segments)
+        jump = False
+        for i in range(len(orderedLines)):
+            orderedLines[i] = self.segments[self.minPath[i][0]]
+        if orderedLines[0].start == orderedLines[1].start or orderedLines[0].start == orderedLines[1].end:
+            orderedLines[0].flip()
+        for i in range(len(orderedLines)-1):
+            print(f'[{orderedLines[i].start} , {orderedLines[i].end}] to [{orderedLines[i+1].start} , {orderedLines[i+1].end}]')
+            if orderedLines[i].end != orderedLines[i+1].start:
+                if self.minPath[i+1][1] == -1 and orderedLines[i].end == orderedLines[i+1].end:
+                    orderedLines[i+1].flip()
+                    print("Flip A")
+                elif orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords and orderedLines[i].end == orderedLines[i+1].end:
+                    orderedLines[i+1].flip()
+                    print("Flip B")
+                elif orderedLines[i].start == orderedLines[i+1].end:
+                    orderedLines[i].flip()
+                    orderedLines[i+1].flip()
+                    print("Flip flip")
+        self.segments = orderedLines
 
     def checkDone(self):
         return self.done
