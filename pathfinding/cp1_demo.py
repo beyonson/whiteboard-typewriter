@@ -1,4 +1,5 @@
 from pathfinding import *
+import time
 
 cadet = SpaceCadet(1)
 
@@ -10,7 +11,7 @@ lines.append(Line(.2,.4,.4,.4001))
 lines.append(Line(.4,.4,.4,.2))
 
 pathfinder = Pathfinder(lines)
-pathfinder.setVerbosity(True)
+pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
@@ -37,11 +38,18 @@ lines.append(Line(.7,.6,.6,.5,.6,.6,90)) # 3
 lines.append(Line(.5,.6,.6,.7,.6,.6,90)) # 1
 lines.append(Line(.6,.7,.7,.6,.6,.6,90)) # 2
 lines.append(Line(.6,.5,.5,.6,.6,.6,90)) # 4
+lines.append(Line(.9,.8,.8,.7,.8,.8,90)) # 3
+lines.append(Line(.7,.8,.8,.9,.8,.8,90)) # 1
+lines.append(Line(.8,.9,.9,.8,.8,.8,90)) # 2
+lines.append(Line(.8,.7,.7,.8,.8,.8,90)) # 4
 
 pathfinder = Pathfinder(lines)
 pathfinder.setVerbosity(False)
 gcode = ""
+start = time.time()
 pathfinder.pathfind()
+end = time.time()
+print(f'Circle test took {end-start}s')
 if pathfinder.checkDone():
     pathfinder.convert(cadet)
     gcode = pathfinder.getGCode()
@@ -126,7 +134,7 @@ lines.append(Line(563.456,1376.21,563.456,876.21))
 lines.append(Line(563.456,1376.21,628.234,1427.96,626,1364,51.75))
 
 pathfinder = Pathfinder(lines)
-pathfinder.setVerbosity(True)
+pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():

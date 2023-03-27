@@ -172,12 +172,25 @@ class Pathfinder:
                 self.dfs(vEdges[:],self.dict[nodeID][i].otherNode(self.nodes[nodeID]).id,cost) # Recurse on node opposite of nodeID over edge i
                 validPath = 1 # Mark that a valid path was found
         if validPath == 0: # If all edges around nodeID were already visited
-            for i in range(len(self.edges)): # Search over all edges
-                if vEdges[i] == 0: # If edge i has not been visited
-                    self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
-                    self.dfs(vEdges[:],self.edges[i].nodes[0].id,cost) # Jump to and recurse over 1st node of unvisited edge
-                    self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
-                    self.dfs(vEdges[:],self.edges[i].nodes[1].id,cost) # Jump to and recurse over 2nd node of unvisited edge
+            priorGood = False # Flag marking whether an optimal jump point is found
+            for i in range(len(self.nodes)): # Search over all nodes
+                possEdges = 0 # Counter to count each unvisited edge attached to node i
+                for j in range(len(self.dict[i])): # Search over all edges attached to node i
+                    if vEdges[self.dict[i][j].id] == 0: # If this edge has not been visited
+                        possEdges += 1 # Increment counter
+                if possEdges == 1: # If there is only one unvisited edge from node i
+                    priorGood = True # Mark that an optimal jump point has been found
+                    for j in range(len(self.dict[i])): # Search through all attached edges to node i
+                        if vEdges[self.dict[i][j].id] == 0: # If edge is unvisited
+                            self.path.append(tuple((self.edges[self.dict[i][j].id].id,nodeID))) # Add unvisited edge to path
+                            self.dfs(vEdges[:],i,cost) # Jump to and recurse over target node of unvisited edge
+            if not priorGood:
+                for i in range(len(self.edges)): # Search over all edges
+                    if vEdges[i] == 0: # If edge i has not been visited
+                        self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
+                        self.dfs(vEdges[:],self.edges[i].nodes[0].id,cost) # Jump to and recurse over 1st node of unvisited edge
+                        self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
+                        self.dfs(vEdges[:],self.edges[i].nodes[1].id,cost) # Jump to and recurse over 2nd node of unvisited edge
         if len(self.path) > 0: # If this is not the first node
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
@@ -334,11 +347,11 @@ class Pathfinder:
             for edge in self.edges:
                 if edge.hasNode(i):
                     dict[i].append(edge)
-        self.xPrint(f'Dictionary initialized! Contains:')
-        for i in range(len(dict)):
-            self.xPrint(f'{i} - ')
-            for j in range(len(dict[i])):
-                self.xPrint(f' {dict[i][j].id}')
+        #self.xPrint(f'Dictionary initialized! Contains:')
+        #for i in range(len(dict)):
+        #    self.xPrint(f'{i} - ')
+        #    for j in range(len(dict[i])):
+        #        self.xPrint(f' {dict[i][j].id}')
         return dict
 
     def findStart(self):
@@ -365,18 +378,14 @@ class Pathfinder:
         if orderedLines[0].start == orderedLines[1].start or orderedLines[0].start == orderedLines[1].end:
             orderedLines[0].flip()
         for i in range(len(orderedLines)-1):
-            print(f'[{orderedLines[i].start} , {orderedLines[i].end}] to [{orderedLines[i+1].start} , {orderedLines[i+1].end}]')
             if orderedLines[i].end != orderedLines[i+1].start:
                 if self.minPath[i+1][1] == -1 and orderedLines[i].end == orderedLines[i+1].end:
                     orderedLines[i+1].flip()
-                    print("Flip A")
                 elif orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords and orderedLines[i].end == orderedLines[i+1].end:
                     orderedLines[i+1].flip()
-                    print("Flip B")
                 elif orderedLines[i].start == orderedLines[i+1].end:
                     orderedLines[i].flip()
                     orderedLines[i+1].flip()
-                    print("Flip flip")
         self.segments = orderedLines
 
     def checkDone(self):
