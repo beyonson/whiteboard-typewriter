@@ -66,6 +66,8 @@ class Node:
         Node.__COUNTER += 1
     def addEdge(self,edge):
         self.edges.append(edge)
+    def coords(self):
+        return (self.x,self.y)
     @classmethod
     def resetCounter(cls):
         cls.__COUNTER = 0
@@ -356,18 +358,26 @@ class Pathfinder:
 
     def deNodify(self):
         self.xPrint("Convert Nodes and Edges to Lines")
-        newLines = [-1] * len(self.segments)
-        for i in range(len(newLines)):
-            newLines[i] = self.segments[self.minPath[i][0]]
-        if newLines[0].start == newLines[1].start or newLines[0].start == newLines[1].end:
-            newLines[0].flip()
-        for i in range(len(newLines)-1):
-            if newLines[i].end != newLines[i+1].start:
-                if self.minPath[i+1][1] == -1:
-                    newLines[i+1].flip()
-                elif newLines[i+1].start[0] != self.nodes[self.minPath[i+1][1]].x or newLines[i+1].start[1] != self.nodes[self.minPath[i+1][1]].y:
-                    newLines[i+1].flip()
-        self.segments = newLines
+        orderedLines = [-1] * len(self.segments)
+        jump = False
+        for i in range(len(orderedLines)):
+            orderedLines[i] = self.segments[self.minPath[i][0]]
+        if orderedLines[0].start == orderedLines[1].start or orderedLines[0].start == orderedLines[1].end:
+            orderedLines[0].flip()
+        for i in range(len(orderedLines)-1):
+            print(f'[{orderedLines[i].start} , {orderedLines[i].end}] to [{orderedLines[i+1].start} , {orderedLines[i+1].end}]')
+            if orderedLines[i].end != orderedLines[i+1].start:
+                if self.minPath[i+1][1] == -1 and orderedLines[i].end == orderedLines[i+1].end:
+                    orderedLines[i+1].flip()
+                    print("Flip A")
+                elif orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords and orderedLines[i].end == orderedLines[i+1].end:
+                    orderedLines[i+1].flip()
+                    print("Flip B")
+                elif orderedLines[i].start == orderedLines[i+1].end:
+                    orderedLines[i].flip()
+                    orderedLines[i+1].flip()
+                    print("Flip flip")
+        self.segments = orderedLines
 
     def checkDone(self):
         return self.done
