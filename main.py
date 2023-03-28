@@ -27,8 +27,9 @@ def charPreProcProcess():
             # if text is changed, send to yasser and update
             for i in range(len(currentText), len(updatedText)-1):
                 asciiNum = ord(updatedText[i])
-                filename = "chars/" + str(asciiNum) + ".bmp"
+                filename = "opengl-text-editor/chars/myfile" + str(asciiNum) + ".bmp"
                 segInfo = [filename, chr(asciiNum)]
+                print(segInfo)
                 segmentationQueue.put(segInfo) # this line breaks the code
             currentText = updatedText
             
@@ -48,12 +49,12 @@ def segmentationProcess():
     ### TEST CODE ###
 
     while True:
-        while not segmentationQueue.get():
+        while segmentationQueue.get():
 
             # run segmentation on current file path
             tgt = segmentationQueue.get()
-
-            img = get_image(tgt[1])
+            print(tgt[0])
+            img = get_image(tgt[0])
 
             path_finding_lines = []
 
@@ -67,13 +68,15 @@ def segmentationProcess():
 
             line_segments = remove_overlap_lines(line_segments, arc_list)
 
+            print("Finished segments")
+
             for i in range(len(line_segments)):
                 # class Line:
                 # def __init__(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
                 path_finding_lines.append(Line(line_segments[i][0][0], line_segments[i][0][1], line_segments[i][1][0], line_segments[i][1][1]))
 
 
-            pack = PathfindingPackage(path_finding_lines,str(tgt[0]),"Font")
+            pack = PathfindingPackage(path_finding_lines,str(tgt[1]),"Font")
             pathfindingQueue.put(pack)
 
             # centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
