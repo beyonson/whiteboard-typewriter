@@ -4,7 +4,7 @@ import sys
 import serial
 import time
 sys.path.insert(0, './character_segmentation')
-from character_segmentation import get_image, find_lines, find_arcs, find_circles, circle_processing, remove_overlap_lines
+from segmentation import get_image, find_lines, find_arcs, find_circles, circle_processing, remove_overlap_lines
 from CharacterCache import *
 sys.path.insert(0, './pathfinding')
 from pathfinding import *
@@ -15,13 +15,23 @@ from SpaceCadet import *
 
 def charPreProcProcess():
 
-    ### TEST CODE ###
+    currentText = ""
 
     while True:
-        for i in range(6):
-            segmentationQueue.put(i)
-            time.sleep(1)
+        # open text file
+        textfile = open("typedText.txt", "r+")
+        updatedText = textfile.readline()
 
+        # check to see if text has changed
+        if (updatedText != currentText):
+            # if text is changed, send to yasser and update
+            for i in range(len(currentText), len(updatedText)-1):
+                asciiNum = ord(updatedText[i])
+                filename = "chars/" + str(asciiNum) + ".bmp"
+                segInfo = [filename, chr(asciiNum)]
+                segmentationQueue.put(segInfo) # this line breaks the code
+            currentText = updatedText
+            
     #################
 
 #   When letter recieved:
@@ -31,6 +41,7 @@ def charPreProcProcess():
 
 ###################################################
 ##      THREAD 2 : CHARACTER SEGMENTATION        ##
+
 
 def segmentationProcess():
 
@@ -187,10 +198,10 @@ pathfindingQueue = Queue()
 serialQueue = Queue()
 cacheQueue = Queue()
 
-serialToMotor = serial.Serial('COM3')
-serialToMotor.write(str.encode("\r\n\r\n"))
-time.sleep(2)   # Wait for grbl to initialize
-serialToMotor.flushInput()  # Flush startup text in serial input
+# serialToMotor = serial.Serial('COM3')
+# serialToMotor.write(str.encode("\r\n\r\n"))
+# time.sleep(2)   # Wait for grbl to initialize
+# serialToMotor.flushInput()  # Flush startup text in serial input
 
 charPreProcThread.start()
 segmentationThread.start()
