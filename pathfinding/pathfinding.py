@@ -158,7 +158,7 @@ class Pathfinder:
         if len(self.path) > 0: # If this is not the first node
             if self.path[-1][1] != -1:
                 cost += abs(math.sqrt((self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).x-self.nodes[self.path[-1][1]].x)**2 + (self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).y-self.nodes[self.path[-1][1]].y)**2)) # Calculate and add the cost of the jump
-                self.path[-1] = tuple((self.path[-1][0],nodeID)) # Replace jump value with jump destination for easier gcode generation | self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).id
+                self.path[-1] = tuple((self.path[-1][0],self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).id)) # Replace jump value with jump destination for easier gcode generation | self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).id
             cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
             vEdges[self.path[-1][0]] = 1 # Mark edge as visited
         #self.xPrint(f'DFS: Path: {self.path}, CurrentNode: {nodeID}, Cost: {cost}, vEdges: {vEdges}')

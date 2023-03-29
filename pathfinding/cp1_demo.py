@@ -100,7 +100,7 @@ lines.append(Line(.3,.2,.2,.3,.2,.2,90))
 lines.append(Line(.2,.3,.1,.2,.2,.2,90))
 
 pathfinder = Pathfinder(lines)
-pathfinder.setVerbosity(True)
+pathfinder.setVerbosity(False)
 gcode = ""
 pathfinder.pathfind()
 if pathfinder.checkDone():
