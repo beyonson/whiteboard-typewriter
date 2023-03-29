@@ -83,7 +83,7 @@ def pathfindingProcess(pack):
 
     return gcode
 
-def serialProcess(gcode):
+def serialProcess(gcode, serialToMotor):
     for line in gcode.splitlines():
         line = line.strip()
         print(f'Sending: {line}')
@@ -94,6 +94,7 @@ def serialProcess(gcode):
 
 if __name__ == "__main__":
 
+    serialToMotor = serial.Serial('COM3')
     currentText = ""
     textfile = open("typedText.txt", "r+")
     updatedText = textfile.readline()
@@ -108,7 +109,7 @@ if __name__ == "__main__":
 
             lines = segmentationProcess(segInfo)
             gcode = pathfindingProcess(lines)
-            serialProcess(gcode)
+            serialProcess(gcode, serialToMotor)
 
         currentText = updatedText
 
