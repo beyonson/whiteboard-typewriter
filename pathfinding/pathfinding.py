@@ -184,7 +184,7 @@ class Pathfinder:
                         if vEdges[self.dict[i][j].id] == 0: # If edge is unvisited
                             self.path.append(tuple((self.edges[self.dict[i][j].id].id,nodeID))) # Add unvisited edge to path
                             self.dfs(vEdges[:],i,cost) # Jump to and recurse over target node of unvisited edge
-            if not priorGood:
+            if not priorGood: # If no optimal jump point is found
                 for i in range(len(self.edges)): # Search over all edges
                     if vEdges[i] == 0: # If edge i has not been visited
                         self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
@@ -265,11 +265,12 @@ class Pathfinder:
         curLine = ""
         lastPoint = (0,0)
         start = spacer.plot(lastPoint)
-        self.gcode += "G01 X" + str(start[0]) + " Y" + str(start[1]) + " Z0\n"
         for line in self.segments:
             curLine = ""
             if line.checkPickup(lastPoint):
+                curLine += "G01 X" + str(spacer.plot(lastPoint)[0]) + " Y" + str(spacer.plot(lastPoint)[1]) + " Z0\n"
                 curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
+                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z1\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
