@@ -1,4 +1,3 @@
 [submodule "font-loader"]
 	path = font-loader
 	url = git@github.com:beyonson/font-loader.git
-	branch = main
