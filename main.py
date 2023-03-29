@@ -94,10 +94,21 @@ def serialProcess(gcode, serialToMotor):
 
 if __name__ == "__main__":
 
-    serialToMotor = serial.Serial('COM3')
     currentText = ""
     textfile = open("typedText.txt", "r+")
     updatedText = textfile.readline()
+
+    if (len(sys.argv) > 2):
+        print("ERROR: too many args")
+        exit
+    elif (len(sys.argc) == 1):
+        serial = True
+    else:
+        serial = False
+
+    serialToMotor = ''
+    if serial:
+        serialToMotor = serial.Serial('/dev/ttyACM0')
 
     # check to see if text has changed
     if (updatedText != currentText):
@@ -109,7 +120,8 @@ if __name__ == "__main__":
 
             lines = segmentationProcess(segInfo)
             gcode = pathfindingProcess(lines)
-            serialProcess(gcode, serialToMotor)
+            if serial:
+                serialProcess(gcode, serialToMotor)
 
         currentText = updatedText
 
