@@ -32,7 +32,7 @@ def charPreProcProcess():
             print(segInfo)
 
             return segInfo
-        
+
         currentText = updatedText
 
 
@@ -73,9 +73,11 @@ def pathfindingProcess(pack):
 
     package = pack
     lines = package.lines
+    print(f'Lines: {len(lines)}')
     # if package.letter == "Dummy":
     #     lines == cacheQueue.get()
     pathfinder = Pathfinder(lines)
+    pathfinder.setVerbosity(True)
     pathfinder.pathfind()
     pathfinder.convert(spacer)
     gcode = pathfinder.getGCode()
@@ -101,30 +103,27 @@ if __name__ == "__main__":
     if (len(sys.argv) > 2):
         print("ERROR: too many args")
         exit
-    elif (len(sys.argc) == 1):
-        serial = True
+    elif (len(sys.argv) == 2):
+        serialFlag = True
     else:
-        serial = False
+        serialFlag = False
 
     serialToMotor = ''
-    if serial:
-        serialToMotor = serial.Serial('/dev/ttyACM0')
+    if serialFlag:
+        serialToMotor = serial.Serial('COM3') # /dev/ttyACM0
 
     # check to see if text has changed
     if (updatedText != currentText):
         # if text is changed, send to yasser and update
         for i in range(len(currentText), len(updatedText)-1):
             asciiNum = ord(updatedText[i])
-            filename = "opengl-text-editor/chars/" + str(asciiNum) + ".bmp"
+            filename = "opengl-text-editor/chars/myfile" + str(asciiNum) + ".bmp"
             segInfo = [filename, chr(asciiNum)]
 
             lines = segmentationProcess(segInfo)
             gcode = pathfindingProcess(lines)
-            if serial:
+            print(gcode)
+            if serialFlag:
                 serialProcess(gcode, serialToMotor)
 
         currentText = updatedText
-
-
-
-

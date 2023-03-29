@@ -84,7 +84,7 @@ def find_circles(BW, radius_range, thresh, nhood):
 
     centers = np.concatenate(centers, axis=0)
     radii = np.concatenate(radii, axis=0)
-    
+
     # Remove centers that are too close based on votes and neighborhood size\
     in_range = np.ones(centers.shape[0], dtype=bool)  # all centers are initially in range
 
@@ -134,7 +134,7 @@ def find_arcs(centers, radii, votes, img):
         # Perform k-means clustering to separate the skeleton pixels into two groups
         kmeans = KMeans(n_clusters=3, init='random').fit(np.column_stack((ex, ey)))
         kcenters = kmeans.cluster_centers_
-        
+
         labels = kmeans.labels_
 
         # Determine which cluster contains the majority of the skeleton pixels
@@ -162,7 +162,7 @@ def find_arcs(centers, radii, votes, img):
     return arc_list
 
 def find_lines(img):
-    lines = cv2.HoughLinesP(img, rho=1, theta=np.pi/180, threshold=10, minLineLength=10, maxLineGap=10)
+    lines = cv2.HoughLinesP(img, rho=1, theta=np.pi/180, threshold=10, minLineLength=2, maxLineGap=10)
 
     line_segments = []
     for line in lines:
@@ -176,7 +176,7 @@ def get_image(file_path):
     # img = cv2.imread(os.path.join(os.path.dirname(__file__), file_path), cv2.THRESH_BINARY)
     img = cv2.imread(file_path, cv2.THRESH_BINARY)
     # kernel2 = np.ones((5, 5), np.float32)/25
-    
+
     # Applying the filter
     # img = cv2.filter2D(src=img, ddepth=-1, kernel=kernel2)
 
@@ -205,10 +205,10 @@ def remove_overlap_lines(line_segments, arc_list):
     line_segments = line_segments
 
     overlapping_line_segment_idx = []
-    
+
     for arc in arc_list:
         center, r, start_angle, end_angle, start_idx, end_idx = arc
-        
+
         points_list = []
 
         for j in range(round(start_angle), round(end_angle)):
@@ -218,7 +218,7 @@ def remove_overlap_lines(line_segments, arc_list):
 
         points_list = np.array(points_list)
 
-        
+
 
         for i in range(len(line_segments)):
             line = line_segments[i]
@@ -231,11 +231,11 @@ def remove_overlap_lines(line_segments, arc_list):
     line_segments_new = [row for i, row in enumerate(line_segments) if i not in overlapping_line_segment_idx]
 
     return line_segments_new
-                
-            
 
 
-        
+
+
+
 
 
 if __name__ == "__main__":
@@ -273,7 +273,7 @@ if __name__ == "__main__":
         # Draw arc on image
         # cv2.circle(img, center, int(r), (255,255,255), 2)
         cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
-        
+
         # ellipse_img = cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
         # print(np.where(ellipse_img == 1))
         # print(cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness))
