@@ -67,7 +67,7 @@ class Node:
     def addEdge(self,edge):
         self.edges.append(edge)
     def coords(self):
-        return (self.x,self.y)
+        return tuple((self.x,self.y))
     @classmethod
     def resetCounter(cls):
         cls.__COUNTER = 0
@@ -157,6 +157,7 @@ class Pathfinder:
             else: # If the node has been reached as the result of a jump
                 cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
                 cost += abs(math.sqrt((self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).x-self.nodes[self.path[-1][1]].x)**2 + (self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).y-self.nodes[self.path[-1][1]].y)**2)) # Calculate and add the cost of the jump
+                self.path[-1] = tuple((self.path[-1][0],self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).id)) # Replace jump value with jump destination for easier gcode generation
                 vEdges[self.path[-1][0]] = 1 # Mark edge as visited
         #self.xPrint(f'DFS: Path: {self.path}, CurrentNode: {nodeID}, Cost: {cost}, vEdges: {vEdges}')
         if 0 not in vEdges: # If all edges have been visited
@@ -348,11 +349,6 @@ class Pathfinder:
             for edge in self.edges:
                 if edge.hasNode(i):
                     dict[i].append(edge)
-        #self.xPrint(f'Dictionary initialized! Contains:')
-        #for i in range(len(dict)):
-        #    self.xPrint(f'{i} - ')
-        #    for j in range(len(dict[i])):
-        #        self.xPrint(f' {dict[i][j].id}')
         return dict
 
     def findStart(self):
@@ -379,14 +375,14 @@ class Pathfinder:
         if orderedLines[0].start == orderedLines[1].start or orderedLines[0].start == orderedLines[1].end:
             orderedLines[0].flip()
         for i in range(len(orderedLines)-1):
-            if orderedLines[i].end != orderedLines[i+1].start:
-                if self.minPath[i+1][1] == -1 and orderedLines[i].end == orderedLines[i+1].end:
-                    orderedLines[i+1].flip()
-                elif orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords and orderedLines[i].end == orderedLines[i+1].end:
-                    orderedLines[i+1].flip()
-                elif orderedLines[i].start == orderedLines[i+1].end:
-                    orderedLines[i].flip()
-                    orderedLines[i+1].flip()
+            #self.xPrint(f'{self.edges[self.minPath[i][0]].nodes[0].id} - {self.minPath[i][0]} - {self.edges[self.minPath[i][0]].nodes[1].id} (FROM {self.minPath[i][1]}), {self.edges[self.minPath[i+1][0]].nodes[0].id} - {self.minPath[i+1][0]} - {self.edges[self.minPath[i+1][0]].nodes[1].id} (FROM {self.minPath[i+1][1]})')
+            #self.xPrint(f'orderedLines[i+1].end: {orderedLines[i+1].end} , self.nodes[self.minPath[i+1][1]].coords(): {self.nodes[self.minPath[i+1][1]].coords()}')
+            if self.minPath[i+1][1] == -1 and orderedLines[i].end != orderedLines[i+1].start:
+                #self.xPrint("Flip A")
+                orderedLines[i+1].flip()
+            elif self.minPath[i+1][1] != -1 and orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords(): #  and orderedLines[i].end == orderedLines[i+1].end
+                #self.xPrint("Flip B")
+                orderedLines[i+1].flip()
         self.segments = orderedLines
 
     def checkDone(self):
