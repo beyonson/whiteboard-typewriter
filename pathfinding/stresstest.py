@@ -11,10 +11,10 @@ def lineGen(intensity):
     print(len(lines))
     return lines
 
-for intensity in range(1,9):
+for intensity in range(1,12):
     cadet = SpaceCadet(1)
     pathfinder = Pathfinder(lineGen(intensity))
-    pathfinder.setVerbosity(True)
+    pathfinder.setVerbosity(False)
     gcode = ""
     start = time.time()
     pathfinder.pathfind()
