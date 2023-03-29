@@ -4,6 +4,7 @@ ui/chars
 ui/sd
 #ui/skeletonized
 motorcontorl/env/*
+env
 
 # all
 __pycache__/

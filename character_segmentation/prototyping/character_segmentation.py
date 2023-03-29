@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
 from scipy.ndimage import generate_binary_structure, maximum_filter
 from scipy.spatial.distance import cdist
-import os
 import math
 
 def hough_peaks(H, numpeaks=1, threshold=None, nHoodSize=None):
@@ -139,6 +138,7 @@ def find_arcs(centers, radii, votes, img):
 
         # Determine which cluster contains the majority of the skeleton pixels
         if np.sqrt((kcenters[0][1] - kcenters[1][1])**2 + (kcenters[0][0] - kcenters[1][0])**2) > r/2:
+            print(kcenters)
             majority_label = np.argmax(np.bincount(labels))
 
             # Extract the coordinates of the skeleton pixels in the majority cluster
@@ -156,8 +156,11 @@ def find_arcs(centers, radii, votes, img):
         start_idx = (ex[0], ey[0])
         end_idx = (ex[-1], ey[-1])
 
+        print(start_angle)
+        print(end_angle)
+
         # Add the arc to the list
-        arc_list.append([(cx, cy), r[0], start_angle, end_angle, start_idx, end_idx])
+        arc_list.append((cx, cy, r, start_angle, end_angle, start_idx, end_idx))
 
     return arc_list
 
@@ -171,117 +174,38 @@ def find_lines(img):
 
     return line_segments
 
-def get_image(file_path):
+# img = cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png", cv2.THRESH_BINARY)
 
-    # img = cv2.imread(os.path.join(os.path.dirname(__file__), file_path), cv2.THRESH_BINARY)
-    img = cv2.imread(file_path, cv2.THRESH_BINARY)
-    # kernel2 = np.ones((5, 5), np.float32)/25
-    
-    # Applying the filter
-    # img = cv2.filter2D(src=img, ddepth=-1, kernel=kernel2)
+# line_segments = find_lines(img)
 
-    return img
-
-def circle_processing(centers, radii, votes):
-    good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([60])[0])
-    centers = centers[np.squeeze(good_circles)]
-    radii = radii[good_circles]
-    votes = np.take(votes, np.where(good_circles))[0]
-
-    return centers, radii, votes
-
-def connect_nd(ends):
-    d = np.diff(ends, axis=0)[0]
-    j = np.argmax(np.abs(d))
-    D = d[j]
-    aD = np.abs(D)
-    return ends[0] + (np.outer(np.arange(aD + 1), d) + (aD//2)) // aD
+# fig, ax = plt.subplots()
+# # ax.imshow(cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png"))
+# for line in line_segments:
+#     x1, y1 = line[0]
+#     x2, y2 = line[1]
+#     ax.plot([x1, x2], [y1, y2], color='r')
 
 
+# centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
+# good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([60])[0])
+# centers = centers[np.squeeze(good_circles)]
+# radii = radii[good_circles]
+# votes = np.take(votes, np.where(good_circles))[0]
 
-def remove_overlap_lines(line_segments, arc_list):
+# arc_list = find_arcs(centers, radii, votes, img)
 
-    arc_list = arc_list
-    line_segments = line_segments
+# # Iterate over arc_list and draw arcs on image
+# for arc in arc_list:
+#     cx, cy, r, start_angle, end_angle, start_idx, end_idx = arc
+#     thickness = 5
+#     color = (255, 255, 255) # Red color
 
-    overlapping_line_segment_idx = []
-    
-    for arc in arc_list:
-        center, r, start_angle, end_angle, start_idx, end_idx = arc
-        
-        points_list = []
+#     center = (int(cx), int(cy))
 
-        for j in range(round(start_angle), round(end_angle)):
-            x_val = center[0] + round(r*math.cos(math.radians(j)))
-            y_val = center[1] + round(r*math.sin(math.radians(j)))
-            points_list.append([x_val,y_val])
+#     # Draw arc on image
+#     cv2.circle(img, center, int(r), (255,255,255), 2)
+#     cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
 
-        points_list = np.array(points_list)
-
-        
-
-        for i in range(len(line_segments)):
-            line = line_segments[i]
-            points = connect_nd(np.array( [[line[0][0], line[0][1]], [line[1][0], line[1][1]]] ))
-            intersecting_points = np.array([x for x in set(tuple(x) for x in points) & set(tuple(x) for x in points_list)])
-            if len(intersecting_points)/len(points) >= 0.25:
-                # line_segments = np.delete(line_segments, i, 0)
-                overlapping_line_segment_idx.append(i)
-
-    line_segments_new = [row for i, row in enumerate(line_segments) if i not in overlapping_line_segment_idx]
-
-    return line_segments_new
-                
-            
-
-
-        
-
-
-if __name__ == "__main__":
-
-    img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile68.bmp"))
-
-    line_segments = find_lines(img)
-
-
-
-
-    centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
-
-    centers, radii, votes = circle_processing(centers, radii, votes)
-
-    arc_list = find_arcs(centers, radii, votes, img)
-
-    line_segments = remove_overlap_lines(line_segments, arc_list)
-
-    fig, ax = plt.subplots()
-    # ax.imshow(cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png"))
-    for line in line_segments:
-        x1, y1 = line[0]
-        x2, y2 = line[1]
-        ax.plot([x1, x2], [y1, y2], color='r')
-
-    # Iterate over arc_list and draw arcs on image
-    for arc in arc_list:
-        center, r, start_angle, end_angle, start_idx, end_idx = arc
-        thickness = 5
-        color = (255, 255, 255) # Red color
-
-        # center = (int(cx), int(cy))
-
-        # Draw arc on image
-        # cv2.circle(img, center, int(r), (255,255,255), 2)
-        cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
-        
-        # ellipse_img = cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
-        # print(np.where(ellipse_img == 1))
-        # print(cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness))
-
-
-    # print(arc_list)
-    # print(line_segments)
-
-    # Display image with circles
-    plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    plt.show()
+# # Display image with circles
+# plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+# plt.show()
