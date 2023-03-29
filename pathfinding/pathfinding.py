@@ -10,6 +10,7 @@
 
 import math
 from SpaceCadet import *
+import time
 
 def clean():
     Edge.resetCounter()
@@ -111,10 +112,12 @@ class Pathfinder:
         self.startPt = 0 #    startPt        : Integer to keep track of what node was chosen as the starting point.
         self.done = False #   done           : Flag raised when pathfinding has been completed.
         self.gcode = "" #     gcode          : String holding complete gcode for given character.
+        self.ripcord = -1 #   ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
         self.standardize()
         self.snap()
 
     def pathfind(self):
+        start = time.time()
         self.nodify()
         self.dict = self.initDictionary() # Initialize dictionary data structure for pathfinding
         self.costs = [1000000] * len(self.nodes) # Initialize costs vector
@@ -139,7 +142,9 @@ class Pathfinder:
             for step in finalPath:
                 if step[1] != -1:
                     ideal = False
-            if ideal:
+            if ideal or (self.ripcord >= 0 and time.time() - start > self.ripcord):
+                if self.ripcord >= 0 and time.time() - start > self.ripcord:
+                    self.xPrint("Rip!")
                 break
         self.minPath = finalPath
         self.xPrint(f'Pathfinding complete! Final path is: {self.minPath}')
@@ -195,6 +200,9 @@ class Pathfinder:
         if len(self.path) > 0: # If this is not the first node
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
+
+    def setRipcord(self,rip=5):
+        self.ripcord = rip
 
     def snap(self,sensitivity=.005):
         for i in range(len(self.segments)):
