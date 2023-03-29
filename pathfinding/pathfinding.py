@@ -10,6 +10,7 @@
 
 import math
 from SpaceCadet import *
+import time
 
 def clean():
     Edge.resetCounter()
@@ -67,7 +68,7 @@ class Node:
     def addEdge(self,edge):
         self.edges.append(edge)
     def coords(self):
-        return (self.x,self.y)
+        return tuple((self.x,self.y))
     @classmethod
     def resetCounter(cls):
         cls.__COUNTER = 0
@@ -111,10 +112,12 @@ class Pathfinder:
         self.startPt = 0 #    startPt        : Integer to keep track of what node was chosen as the starting point.
         self.done = False #   done           : Flag raised when pathfinding has been completed.
         self.gcode = "" #     gcode          : String holding complete gcode for given character.
+        self.ripcord = -1 #   ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
         self.standardize()
         self.snap()
 
     def pathfind(self):
+        start = time.time()
         self.nodify()
         self.dict = self.initDictionary() # Initialize dictionary data structure for pathfinding
         self.costs = [1000000] * len(self.nodes) # Initialize costs vector
@@ -139,7 +142,9 @@ class Pathfinder:
             for step in finalPath:
                 if step[1] != -1:
                     ideal = False
-            if ideal:
+            if ideal or (self.ripcord >= 0 and time.time() - start > self.ripcord):
+                if self.ripcord >= 0 and time.time() - start > self.ripcord:
+                    self.xPrint("Rip!")
                 break
         self.minPath = finalPath
         self.xPrint(f'Pathfinding complete! Final path is: {self.minPath}')
@@ -151,13 +156,11 @@ class Pathfinder:
     # cost     : Holds the cost of the working path.
     def dfs(self,vEdges,nodeID,cost):
         if len(self.path) > 0: # If this is not the first node
-            if self.path[-1][1] == -1: # If the node has not been reached as the result of a jump
-                cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
-                vEdges[self.path[-1][0]] = 1 # Mark edge as visited
-            else: # If the node has been reached as the result of a jump
-                cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
+            if self.path[-1][1] != -1:
                 cost += abs(math.sqrt((self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).x-self.nodes[self.path[-1][1]].x)**2 + (self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).y-self.nodes[self.path[-1][1]].y)**2)) # Calculate and add the cost of the jump
-                vEdges[self.path[-1][0]] = 1 # Mark edge as visited
+                self.path[-1] = tuple((self.path[-1][0],nodeID)) # Replace jump value with jump destination for easier gcode generation | self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).id
+            cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
+            vEdges[self.path[-1][0]] = 1 # Mark edge as visited
         #self.xPrint(f'DFS: Path: {self.path}, CurrentNode: {nodeID}, Cost: {cost}, vEdges: {vEdges}')
         if 0 not in vEdges: # If all edges have been visited
             if cost < self.costs[self.startPt]: # If cost is less than last min
@@ -182,18 +185,30 @@ class Pathfinder:
                     priorGood = True # Mark that an optimal jump point has been found
                     for j in range(len(self.dict[i])): # Search through all attached edges to node i
                         if vEdges[self.dict[i][j].id] == 0: # If edge is unvisited
-                            self.path.append(tuple((self.edges[self.dict[i][j].id].id,nodeID))) # Add unvisited edge to path
-                            self.dfs(vEdges[:],i,cost) # Jump to and recurse over target node of unvisited edge
+                            #print(f'Jump to {i}')
+                            if self.edges[self.dict[i][j].id].nodes[0].id != i:
+                                self.path.append(tuple((self.edges[self.dict[i][j].id].id,nodeID))) # Add unvisited edge to path
+                                if self.dfs(vEdges[:],self.edges[self.dict[i][j].id].nodes[0].id,cost): # Jump to and recurse over target node of unvisited edge
+                                    break
+                            else:
+                                self.path.append(tuple((self.edges[self.dict[i][j].id].id,nodeID))) # Add unvisited edge to path
+                                if self.dfs(vEdges[:],self.edges[self.dict[i][j].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
+                                    break
             if not priorGood: # If no optimal jump point is found
                 for i in range(len(self.edges)): # Search over all edges
                     if vEdges[i] == 0: # If edge i has not been visited
+                        #print(f'NonPriority Jump to {self.edges[i].nodes[0].id}')
                         self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
                         self.dfs(vEdges[:],self.edges[i].nodes[0].id,cost) # Jump to and recurse over 1st node of unvisited edge
+                        #print(f'NonPriority Jump to {self.edges[i].nodes[1].id}')
                         self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
                         self.dfs(vEdges[:],self.edges[i].nodes[1].id,cost) # Jump to and recurse over 2nd node of unvisited edge
         if len(self.path) > 0: # If this is not the first node
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
+
+    def setRipcord(self,rip=5):
+        self.ripcord = rip
 
     def snap(self,sensitivity=.005):
         for i in range(len(self.segments)):
@@ -348,11 +363,6 @@ class Pathfinder:
             for edge in self.edges:
                 if edge.hasNode(i):
                     dict[i].append(edge)
-        #self.xPrint(f'Dictionary initialized! Contains:')
-        #for i in range(len(dict)):
-        #    self.xPrint(f'{i} - ')
-        #    for j in range(len(dict[i])):
-        #        self.xPrint(f' {dict[i][j].id}')
         return dict
 
     def findStart(self):
@@ -379,14 +389,14 @@ class Pathfinder:
         if orderedLines[0].start == orderedLines[1].start or orderedLines[0].start == orderedLines[1].end:
             orderedLines[0].flip()
         for i in range(len(orderedLines)-1):
-            if orderedLines[i].end != orderedLines[i+1].start:
-                if self.minPath[i+1][1] == -1 and orderedLines[i].end == orderedLines[i+1].end:
-                    orderedLines[i+1].flip()
-                elif orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords and orderedLines[i].end == orderedLines[i+1].end:
-                    orderedLines[i+1].flip()
-                elif orderedLines[i].start == orderedLines[i+1].end:
-                    orderedLines[i].flip()
-                    orderedLines[i+1].flip()
+            self.xPrint(f'{self.edges[self.minPath[i][0]].nodes[0].id} - {self.minPath[i][0]} - {self.edges[self.minPath[i][0]].nodes[1].id} (FROM {self.minPath[i][1]}), {self.edges[self.minPath[i+1][0]].nodes[0].id} - {self.minPath[i+1][0]} - {self.edges[self.minPath[i+1][0]].nodes[1].id} (FROM {self.minPath[i+1][1]})')
+            #self.xPrint(f'orderedLines[i+1].end: {orderedLines[i+1].end} , self.nodes[self.minPath[i+1][1]].coords(): {self.nodes[self.minPath[i+1][1]].coords()}')
+            if self.minPath[i+1][1] == -1 and orderedLines[i].end != orderedLines[i+1].start:
+                self.xPrint("Flip A")
+                orderedLines[i+1].flip()
+            elif self.minPath[i+1][1] != -1 and orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords(): #  and orderedLines[i].end == orderedLines[i+1].end
+                self.xPrint("Flip B")
+                orderedLines[i+1].flip()
         self.segments = orderedLines
 
     def checkDone(self):
