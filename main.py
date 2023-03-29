@@ -94,10 +94,23 @@ def serialProcess(gcode):
 
 if __name__ == "__main__":
 
-    letter = charPreProcProcess()
-    lines = segmentationProcess(letter)
-    gcode = pathfindingProcess(lines)
-    serialProcess(gcode)
+    currentText = ""
+    textfile = open("typedText.txt", "r+")
+    updatedText = textfile.readline()
+
+    # check to see if text has changed
+    if (updatedText != currentText):
+        # if text is changed, send to yasser and update
+        for i in range(len(currentText), len(updatedText)-1):
+            asciiNum = ord(updatedText[i])
+            filename = "opengl-text-editor/chars/myfile" + str(asciiNum) + ".bmp"
+            segInfo = [filename, chr(asciiNum)]
+
+            lines = segmentationProcess(segInfo)
+            gcode = pathfindingProcess(lines)
+            serialProcess(gcode)
+
+        currentText = updatedText
 
 
 
