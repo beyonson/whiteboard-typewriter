@@ -4,7 +4,7 @@ import sys
 import serial
 import time
 sys.path.insert(0, './character_segmentation')
-from segmentation import get_image, find_lines, find_arcs, find_circles, circle_processing, remove_overlap_lines
+from segmentation import get_image, find_lines, find_arcs, find_circles, circle_processing, remove_overlap_lines, remove_intersections
 from CharacterCache import *
 sys.path.insert(0, './pathfinding')
 from pathfinding import *
@@ -46,6 +46,7 @@ def segmentationProcess(tgt):
     path_finding_lines = []
 
     line_segments = find_lines(img)
+    line_segments = remove_intersections(line_segments)
 
     # centers, radii, votes = find_circles(img, range(20,1000,10), 0.5, 20)
 

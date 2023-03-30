@@ -198,6 +198,46 @@ def connect_nd(ends):
     return ends[0] + (np.outer(np.arange(aD + 1), d) + (aD//2)) // aD
 
 
+def remove_intersections(line_segments):
+
+    for i in range(len(line_segments)):
+        line = line_segments[i]
+        points = connect_nd(np.array( [[line[0][0], line[0][1]], [line[1][0], line[1][1]]] ))
+
+        for j in range(i+1, len(line_segments)):
+            comp_line = line_segments[j]
+            comp_points = connect_nd(np.array( [[comp_line[0][0], comp_line[0][1]], [comp_line[1][0], comp_line[1][1]]] ))
+
+            intersecting_points = np.array([x for x in set(tuple(x) for x in points) & set(tuple(x) for x in comp_points)])
+            
+
+            if len(intersecting_points) > 1:
+                intersecting_point = intersecting_points[0]
+                
+                # Distance from point to start and end of line
+                start_line_dist = math.dist(line[0], intersecting_point)
+                end_line_dist = math.dist(line[1], intersecting_point)
+
+                if start_line_dist > end_line_dist:
+                    line[1] = intersecting_point
+                else:
+                    line[0] = intersecting_point
+
+
+                # Distance from point to start and end of line
+                start_line_dist = math.dist(comp_line[0], intersecting_point)
+                end_line_dist = math.dist(comp_line[1], intersecting_point)
+
+                if start_line_dist > end_line_dist:
+                    line_segments[j][1] = intersecting_point
+                else:
+                    line_segments[j][0] = intersecting_point
+
+    return line_segments
+
+
+        
+
 
 def remove_overlap_lines(line_segments, arc_list):
 
@@ -243,6 +283,8 @@ if __name__ == "__main__":
     img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile67.bmp"))
 
     line_segments = find_lines(img)
+
+    line_segments = remove_intersections(line_segments)
 
 
 
