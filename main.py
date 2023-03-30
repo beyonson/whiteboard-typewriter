@@ -47,7 +47,7 @@ def segmentationProcess(tgt):
 
     line_segments = find_lines(img)
 
-    centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
+    centers, radii, votes = find_circles(img, range(20,1000,10), 0.5, 20)
 
     centers, radii, votes = circle_processing(centers, radii, votes)
 
@@ -61,6 +61,9 @@ def segmentationProcess(tgt):
         # class Line:
         # def __init__(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
         path_finding_lines.append(Line(line_segments[i][0][0], line_segments[i][0][1], line_segments[i][1][0], line_segments[i][1][1]))
+
+    for i in range(len(arc_list)):
+        path_finding_lines.append(Line(arc_list[i][4][0], arc_list[i][4][1], arc_list[i][5][0], arc_list[i][5][1], arc_list[i][0][0], arc_list[i][0][1],(arc_list[i][3]-arc_list[i][2])))
 
 
     pack = PathfindingPackage(path_finding_lines,str(tgt[1]),"Font")

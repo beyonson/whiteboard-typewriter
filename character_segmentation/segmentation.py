@@ -131,18 +131,18 @@ def find_arcs(centers, radii, votes, img):
         # Extract the coordinates of the skeleton pixels that are within the circle
         ex, ey = y[idx], x[idx]
 
-        # Perform k-means clustering to separate the skeleton pixels into two groups
-        kmeans = KMeans(n_clusters=3, init='random').fit(np.column_stack((ex, ey)))
-        kcenters = kmeans.cluster_centers_
+        # # Perform k-means clustering to separate the skeleton pixels into two groups
+        # kmeans = KMeans(n_clusters=3, init='random').fit(np.column_stack((ex, ey)))
+        # kcenters = kmeans.cluster_centers_
 
-        labels = kmeans.labels_
+        # labels = kmeans.labels_
 
-        # Determine which cluster contains the majority of the skeleton pixels
-        if np.sqrt((kcenters[0][1] - kcenters[1][1])**2 + (kcenters[0][0] - kcenters[1][0])**2) > r/2:
-            majority_label = np.argmax(np.bincount(labels))
+        # # Determine which cluster contains the majority of the skeleton pixels
+        # if np.sqrt((kcenters[0][1] - kcenters[1][1])**2 + (kcenters[0][0] - kcenters[1][0])**2) > r/2:
+        #     majority_label = np.argmax(np.bincount(labels))
 
-            # Extract the coordinates of the skeleton pixels in the majority cluster
-            ex, ey = ex[labels == majority_label], ey[labels == majority_label]
+        #     # Extract the coordinates of the skeleton pixels in the majority cluster
+        #     ex, ey = ex[labels == majority_label], ey[labels == majority_label]
 
         # Compute the angle of each skeleton pixel relative to the circle center
         angles = np.rad2deg(np.arctan2(-cy + ey, ex - cx))
@@ -224,7 +224,7 @@ def remove_overlap_lines(line_segments, arc_list):
             line = line_segments[i]
             points = connect_nd(np.array( [[line[0][0], line[0][1]], [line[1][0], line[1][1]]] ))
             intersecting_points = np.array([x for x in set(tuple(x) for x in points) & set(tuple(x) for x in points_list)])
-            if len(intersecting_points)/len(points) >= 0.20:
+            if len(intersecting_points)/len(points) >= 0.10:
                 # line_segments = np.delete(line_segments, i, 0)
                 overlapping_line_segment_idx.append(i)
 
@@ -240,14 +240,14 @@ def remove_overlap_lines(line_segments, arc_list):
 
 if __name__ == "__main__":
 
-    img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile73.bmp"))
+    img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile67.bmp"))
 
     line_segments = find_lines(img)
 
 
 
 
-    centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
+    centers, radii, votes = find_circles(img, range(20,1000,10), 0.5, 20)
 
     centers, radii, votes = circle_processing(centers, radii, votes)
 
