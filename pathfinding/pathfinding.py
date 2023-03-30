@@ -115,6 +115,7 @@ class Pathfinder:
         self.ripcord = -1 #   ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
         self.standardize()
         self.snap(sensitivity)
+        print(f'Lines after the purge: {len(self.segments)}')
 
     def pathfind(self):
         start = time.time()
@@ -229,9 +230,9 @@ class Pathfinder:
                 if dist < sensitivity and dist != 0:
                     self.segments[i].end = self.segments[j].end
                     continue
-        for i in range(len(self.segments)):
-            if self.segments[i].start == self.segments[i].end:
-                self.segments.pop(i)
+        #for i in range(len(self.segments)):
+        #    if self.segments[i].start == self.segments[i].end:
+        #        self.segments.pop(i)
 
     def standardize(self):
         max = 0

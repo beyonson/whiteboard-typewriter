@@ -79,8 +79,8 @@ def pathfindingProcess(pack,spacer):
     print(f'Lines: {len(lines)}')
     # if package.letter == "Dummy":
     #     lines == cacheQueue.get()
-    pathfinder = Pathfinder(lines)
-    pathfinder.setVerbosity(False)
+    pathfinder = Pathfinder(lines,.025)
+    pathfinder.setVerbosity(True)
     pathfinder.setRipcord(5)
     pathfinder.pathfind()
     pathfinder.convert(spacer)
