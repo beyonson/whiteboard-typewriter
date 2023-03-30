@@ -1,6 +1,6 @@
 class SpaceCadet:
-    xMax = 4 # 60
-    yMax = 3 # 40
+    xMax = 6 # 60
+    yMax = 4 # 40
     def __init__(self,size):
         self.size = size
         self.x = 0

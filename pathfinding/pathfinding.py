@@ -99,7 +99,7 @@ class Edge:
         cls.__COUNTER = 0
 
 class Pathfinder:
-    def __init__(self,lines):
+    def __init__(self,lines,sensitivity=.025):
         clean()
         self.segments = lines
         self.verbose = False
@@ -114,7 +114,7 @@ class Pathfinder:
         self.gcode = "" #     gcode          : String holding complete gcode for given character.
         self.ripcord = -1 #   ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
         self.standardize()
-        self.snap()
+        self.snap(sensitivity)
 
     def pathfind(self):
         start = time.time()
