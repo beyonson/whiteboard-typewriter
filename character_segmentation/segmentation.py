@@ -224,7 +224,7 @@ def remove_overlap_lines(line_segments, arc_list):
             line = line_segments[i]
             points = connect_nd(np.array( [[line[0][0], line[0][1]], [line[1][0], line[1][1]]] ))
             intersecting_points = np.array([x for x in set(tuple(x) for x in points) & set(tuple(x) for x in points_list)])
-            if len(intersecting_points)/len(points) >= 0.25:
+            if len(intersecting_points)/len(points) >= 0.20:
                 # line_segments = np.delete(line_segments, i, 0)
                 overlapping_line_segment_idx.append(i)
 

@@ -68,8 +68,7 @@ def segmentationProcess(tgt):
     return pack
 
 
-def pathfindingProcess(pack):
-    spacer = SpaceCadet(1)
+def pathfindingProcess(pack,spacer):
 
     package = pack
     lines = package.lines
@@ -77,11 +76,11 @@ def pathfindingProcess(pack):
     # if package.letter == "Dummy":
     #     lines == cacheQueue.get()
     pathfinder = Pathfinder(lines)
-    pathfinder.setVerbosity(True)
+    pathfinder.setVerbosity(False)
+    pathfinder.setRipcord(5)
     pathfinder.pathfind()
     pathfinder.convert(spacer)
     gcode = pathfinder.getGCode()
-    spacer.step()
 
     return gcode
 
@@ -99,6 +98,7 @@ if __name__ == "__main__":
     currentText = ""
     textfile = open("typedText.txt", "r+")
     updatedText = textfile.readline()
+    spacer = SpaceCadet(1)
 
     if (len(sys.argv) > 2):
         print("ERROR: too many args")
@@ -117,13 +117,19 @@ if __name__ == "__main__":
         # if text is changed, send to yasser and update
         for i in range(len(currentText), len(updatedText)-1):
             asciiNum = ord(updatedText[i])
-            filename = "font-loader/chars/" + str(asciiNum) + ".bmp"
+            filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
             segInfo = [filename, chr(asciiNum)]
 
+            startSeg = time.time()
+            print(updatedText[i])
             lines = segmentationProcess(segInfo)
-            gcode = pathfindingProcess(lines)
+            endSeg = time.time()
+            gcode = pathfindingProcess(lines,spacer)
+            spacer.step()
+            print(f'Time elapsed - Segmentation: {endSeg-startSeg}, Pathfinding: {time.time()-endSeg}')
             print(gcode)
             if serialFlag:
                 serialProcess(gcode, serialToMotor)
+            print('\n')
 
         currentText = updatedText
