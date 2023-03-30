@@ -47,13 +47,14 @@ def segmentationProcess(tgt):
 
     line_segments = find_lines(img)
 
-    centers, radii, votes = find_circles(img, range(20,1000,10), 0.5, 20)
+    # centers, radii, votes = find_circles(img, range(20,1000,10), 0.5, 20)
 
-    centers, radii, votes = circle_processing(centers, radii, votes)
+    # centers, radii, votes = circle_processing(centers, radii, votes)
 
-    arc_list = find_arcs(centers, radii, votes, img)
+    arc_list = []
+    # arc_list = find_arcs(centers, radii, votes, img)
 
-    line_segments = remove_overlap_lines(line_segments, arc_list)
+    # line_segments = remove_overlap_lines(line_segments, arc_list)
 
     print("Finished segments")
 

@@ -162,7 +162,7 @@ def find_arcs(centers, radii, votes, img):
     return arc_list
 
 def find_lines(img):
-    lines = cv2.HoughLinesP(img, rho=1, theta=np.pi/180, threshold=10, minLineLength=2, maxLineGap=10)
+    lines = cv2.HoughLinesP(img, rho=1, theta=0.01, threshold=10, minLineLength=5, maxLineGap=15)
 
     line_segments = []
     for line in lines:
@@ -183,7 +183,7 @@ def get_image(file_path):
     return img
 
 def circle_processing(centers, radii, votes):
-    good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([60])[0])
+    good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([70])[0])
     centers = centers[np.squeeze(good_circles)]
     radii = radii[good_circles]
     votes = np.take(votes, np.where(good_circles))[0]
@@ -247,13 +247,14 @@ if __name__ == "__main__":
 
 
 
-    centers, radii, votes = find_circles(img, range(20,1000,10), 0.5, 20)
+    # centers, radii, votes = find_circles(img, range(20,500,5), 0.7, 20)
 
-    centers, radii, votes = circle_processing(centers, radii, votes)
+    # centers, radii, votes = circle_processing(centers, radii, votes)
 
-    arc_list = find_arcs(centers, radii, votes, img)
+    arc_list = []
+    # arc_list = find_arcs(centers, radii, votes, img)
 
-    line_segments = remove_overlap_lines(line_segments, arc_list)
+    # line_segments = remove_overlap_lines(line_segments, arc_list)
 
     fig, ax = plt.subplots()
     # ax.imshow(cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png"))
