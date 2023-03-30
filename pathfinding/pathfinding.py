@@ -229,6 +229,9 @@ class Pathfinder:
                 if dist < sensitivity and dist != 0:
                     self.segments[i].end = self.segments[j].end
                     continue
+        for i in range(len(self.segments)):
+            if self.segments[i].start == self.segments[i].end:
+                self.segments.pop(i)
 
     def standardize(self):
         max = 0
