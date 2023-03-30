@@ -162,7 +162,7 @@ def find_arcs(centers, radii, votes, img):
     return arc_list
 
 def find_lines(img):
-    lines = cv2.HoughLinesP(img, rho=1, theta=0.01, threshold=10, minLineLength=5, maxLineGap=15)
+    lines = cv2.HoughLinesP(img, rho=1, theta=0.01, threshold=13, minLineLength=1, maxLineGap=10)
 
     line_segments = []
     for line in lines:
@@ -213,7 +213,7 @@ def remove_intersections(line_segments):
 
             if len(intersecting_points) > 1:
                 intersecting_point = intersecting_points[0]
-                
+
                 # Distance from point to start and end of line
                 start_line_dist = math.dist(line[0], intersecting_point)
                 end_line_dist = math.dist(line[1], intersecting_point)
@@ -280,7 +280,7 @@ def remove_overlap_lines(line_segments, arc_list):
 
 if __name__ == "__main__":
 
-    img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile67.bmp"))
+    img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile66.bmp"))
 
     line_segments = find_lines(img)
 

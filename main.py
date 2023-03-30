@@ -10,32 +10,6 @@ sys.path.insert(0, './pathfinding')
 from pathfinding import *
 from SpaceCadet import *
 
-###################################################
-##      THREAD 1 : CHARACTER PREPROCESSING       ##
-
-
-def charPreProcProcess():
-
-    currentText = ""
-
-    # open text file
-    textfile = open("typedText.txt", "r+")
-    updatedText = textfile.readline()
-
-    # check to see if text has changed
-    if (updatedText != currentText):
-        # if text is changed, send to yasser and update
-        for i in range(len(currentText), len(updatedText)-1):
-            asciiNum = ord(updatedText[i])
-            filename = "opengl-text-editor/chars/myfile" + str(asciiNum) + ".bmp"
-            segInfo = [filename, chr(asciiNum)]
-            print(segInfo)
-
-            return segInfo
-
-        currentText = updatedText
-
-
 
 def segmentationProcess(tgt):
 
@@ -122,7 +96,8 @@ if __name__ == "__main__":
         # if text is changed, send to yasser and update
         for i in range(len(currentText), len(updatedText)-1):
             asciiNum = ord(updatedText[i])
-            filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
+            # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
+            filename = "opengl-text-editor/chars/" + str(asciiNum) + ".bmp"
             segInfo = [filename, chr(asciiNum)]
 
             startSeg = time.time()
