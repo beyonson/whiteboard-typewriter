@@ -230,9 +230,6 @@ class Pathfinder:
                 if dist < sensitivity and dist != 0:
                     self.segments[i].end = self.segments[j].end
                     continue
-        #for i in range(len(self.segments)):
-        #    if self.segments[i].start == self.segments[i].end:
-        #        self.segments.pop(i)
 
     def standardize(self):
         max = 0
@@ -287,7 +284,8 @@ class Pathfinder:
         for line in self.segments:
             curLine = ""
             if line.checkPickup(lastPoint):
-                curLine += "G01 X" + str(spacer.plot(lastPoint)[0]) + " Y" + str(spacer.plot(lastPoint)[1]) + " Z0\n"
+                if lastPoint != (0,0):
+                    curLine += "G01 X" + str(spacer.plot(lastPoint)[0]) + " Y" + str(spacer.plot(lastPoint)[1]) + " Z0\n"
                 curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
                 curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z1\n"
                 lastPoint = line.end
@@ -303,6 +301,7 @@ class Pathfinder:
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
+        self.gcode += "G01 X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z1" + "\n"
 
     # Variant of convert function that keeps the Z value set to 0 for debugging purposes.
     def convertConstZ(self,spacer):
