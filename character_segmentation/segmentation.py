@@ -84,7 +84,7 @@ def find_circles(BW, radius_range, thresh, nhood):
 
     centers = np.concatenate(centers, axis=0)
     radii = np.concatenate(radii, axis=0)
-    
+
     # Remove centers that are too close based on votes and neighborhood size\
     in_range = np.ones(centers.shape[0], dtype=bool)  # all centers are initially in range
 
@@ -131,18 +131,18 @@ def find_arcs(centers, radii, votes, img):
         # Extract the coordinates of the skeleton pixels that are within the circle
         ex, ey = y[idx], x[idx]
 
-        # Perform k-means clustering to separate the skeleton pixels into two groups
-        kmeans = KMeans(n_clusters=3, init='random').fit(np.column_stack((ex, ey)))
-        kcenters = kmeans.cluster_centers_
-        
-        labels = kmeans.labels_
+        # # Perform k-means clustering to separate the skeleton pixels into two groups
+        # kmeans = KMeans(n_clusters=3, init='random').fit(np.column_stack((ex, ey)))
+        # kcenters = kmeans.cluster_centers_
 
-        # Determine which cluster contains the majority of the skeleton pixels
-        if np.sqrt((kcenters[0][1] - kcenters[1][1])**2 + (kcenters[0][0] - kcenters[1][0])**2) > r/2:
-            majority_label = np.argmax(np.bincount(labels))
+        # labels = kmeans.labels_
 
-            # Extract the coordinates of the skeleton pixels in the majority cluster
-            ex, ey = ex[labels == majority_label], ey[labels == majority_label]
+        # # Determine which cluster contains the majority of the skeleton pixels
+        # if np.sqrt((kcenters[0][1] - kcenters[1][1])**2 + (kcenters[0][0] - kcenters[1][0])**2) > r/2:
+        #     majority_label = np.argmax(np.bincount(labels))
+
+        #     # Extract the coordinates of the skeleton pixels in the majority cluster
+        #     ex, ey = ex[labels == majority_label], ey[labels == majority_label]
 
         # Compute the angle of each skeleton pixel relative to the circle center
         angles = np.rad2deg(np.arctan2(-cy + ey, ex - cx))
@@ -162,7 +162,7 @@ def find_arcs(centers, radii, votes, img):
     return arc_list
 
 def find_lines(img):
-    lines = cv2.HoughLinesP(img, rho=1, theta=np.pi/180, threshold=10, minLineLength=10, maxLineGap=5)
+    lines = cv2.HoughLinesP(img, rho=1, theta=0.01, threshold=13, minLineLength=1, maxLineGap=10)
 
     line_segments = []
     for line in lines:
@@ -176,14 +176,14 @@ def get_image(file_path):
     # img = cv2.imread(os.path.join(os.path.dirname(__file__), file_path), cv2.THRESH_BINARY)
     img = cv2.imread(file_path, cv2.THRESH_BINARY)
     # kernel2 = np.ones((5, 5), np.float32)/25
-    
+
     # Applying the filter
     # img = cv2.filter2D(src=img, ddepth=-1, kernel=kernel2)
 
     return img
 
 def circle_processing(centers, radii, votes):
-    good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([60])[0])
+    good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([70])[0])
     centers = centers[np.squeeze(good_circles)]
     radii = radii[good_circles]
     votes = np.take(votes, np.where(good_circles))[0]
@@ -198,6 +198,46 @@ def connect_nd(ends):
     return ends[0] + (np.outer(np.arange(aD + 1), d) + (aD//2)) // aD
 
 
+def remove_intersections(line_segments):
+
+    for i in range(len(line_segments)):
+        line = line_segments[i]
+        points = connect_nd(np.array( [[line[0][0], line[0][1]], [line[1][0], line[1][1]]] ))
+
+        for j in range(i+1, len(line_segments)):
+            comp_line = line_segments[j]
+            comp_points = connect_nd(np.array( [[comp_line[0][0], comp_line[0][1]], [comp_line[1][0], comp_line[1][1]]] ))
+
+            intersecting_points = np.array([x for x in set(tuple(x) for x in points) & set(tuple(x) for x in comp_points)])
+            
+
+            if len(intersecting_points) > 1:
+                intersecting_point = intersecting_points[0]
+
+                # Distance from point to start and end of line
+                start_line_dist = math.dist(line[0], intersecting_point)
+                end_line_dist = math.dist(line[1], intersecting_point)
+
+                if start_line_dist > end_line_dist:
+                    line[1] = intersecting_point
+                else:
+                    line[0] = intersecting_point
+
+
+                # Distance from point to start and end of line
+                start_line_dist = math.dist(comp_line[0], intersecting_point)
+                end_line_dist = math.dist(comp_line[1], intersecting_point)
+
+                if start_line_dist > end_line_dist:
+                    line_segments[j][1] = intersecting_point
+                else:
+                    line_segments[j][0] = intersecting_point
+
+    return line_segments
+
+
+        
+
 
 def remove_overlap_lines(line_segments, arc_list):
 
@@ -205,10 +245,10 @@ def remove_overlap_lines(line_segments, arc_list):
     line_segments = line_segments
 
     overlapping_line_segment_idx = []
-    
+
     for arc in arc_list:
         center, r, start_angle, end_angle, start_idx, end_idx = arc
-        
+
         points_list = []
 
         for j in range(round(start_angle), round(end_angle)):
@@ -218,42 +258,45 @@ def remove_overlap_lines(line_segments, arc_list):
 
         points_list = np.array(points_list)
 
-        
+
 
         for i in range(len(line_segments)):
             line = line_segments[i]
             points = connect_nd(np.array( [[line[0][0], line[0][1]], [line[1][0], line[1][1]]] ))
             intersecting_points = np.array([x for x in set(tuple(x) for x in points) & set(tuple(x) for x in points_list)])
-            if len(intersecting_points)/len(points) >= 0.25:
+            if len(intersecting_points)/len(points) >= 0.10:
                 # line_segments = np.delete(line_segments, i, 0)
                 overlapping_line_segment_idx.append(i)
 
     line_segments_new = [row for i, row in enumerate(line_segments) if i not in overlapping_line_segment_idx]
 
     return line_segments_new
-                
-            
 
 
-        
+
+
+
 
 
 if __name__ == "__main__":
 
-    img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile68.bmp"))
+    img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile66.bmp"))
 
     line_segments = find_lines(img)
 
+    line_segments = remove_intersections(line_segments)
 
 
 
-    centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
 
-    centers, radii, votes = circle_processing(centers, radii, votes)
+    # centers, radii, votes = find_circles(img, range(20,500,5), 0.7, 20)
 
-    arc_list = find_arcs(centers, radii, votes, img)
+    # centers, radii, votes = circle_processing(centers, radii, votes)
 
-    line_segments = remove_overlap_lines(line_segments, arc_list)
+    arc_list = []
+    # arc_list = find_arcs(centers, radii, votes, img)
+
+    # line_segments = remove_overlap_lines(line_segments, arc_list)
 
     fig, ax = plt.subplots()
     # ax.imshow(cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png"))
@@ -273,7 +316,7 @@ if __name__ == "__main__":
         # Draw arc on image
         # cv2.circle(img, center, int(r), (255,255,255), 2)
         cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
-        
+
         # ellipse_img = cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
         # print(np.where(ellipse_img == 1))
         # print(cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness))
