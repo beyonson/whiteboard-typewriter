@@ -55,7 +55,7 @@ def pathfindingProcess(pack,spacer):
     # if package.letter == "Dummy":
     #     lines == cacheQueue.get()
     pathfinder = Pathfinder(lines,.025)
-    pathfinder.setVerbosity(True)
+    pathfinder.setVerbosity(False)
     pathfinder.setRipcord(5)
     pathfinder.pathfind()
     pathfinder.convert(spacer)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         for i in range(len(currentText), len(updatedText)-1):
             asciiNum = ord(updatedText[i])
             # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
-            filename = "opengl-text-editor/chars/" + str(asciiNum) + ".bmp"
+            filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
             segInfo = [filename, chr(asciiNum)]
 
             startSeg = time.time()
