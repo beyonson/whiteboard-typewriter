@@ -115,7 +115,6 @@ class Pathfinder:
         self.ripcord = -1 #   ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
         self.standardize()
         self.snap(sensitivity)
-        print(f'Lines after the purge: {len(self.segments)}')
 
     def pathfind(self):
         start = time.time()
@@ -301,7 +300,7 @@ class Pathfinder:
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
-        self.gcode += "G01 X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z1" + "\n"
+        self.gcode += "G01 X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z0" + "\n"
 
     # Variant of convert function that keeps the Z value set to 0 for debugging purposes.
     def convertConstZ(self,spacer):
