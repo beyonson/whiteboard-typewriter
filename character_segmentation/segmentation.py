@@ -409,14 +409,14 @@ if __name__ == "__main__":
 
     # Benchmark line segmentation with optimized arcs
     line_arc_optimized = []
-    for i in range(81,91):
+    for i in range(67,91):
         print(i)
 
         img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile" +  str(i) + ".bmp"))
 
         tic = datetime.now()
 
-        line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=8, minLineLength=3, maxLineGap=20)
+        line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=13, minLineLength=1, maxLineGap=10)
 
         line_segments = remove_intersections(line_segments)
 

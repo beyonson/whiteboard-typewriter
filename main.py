@@ -20,20 +20,22 @@ def segmentationProcess(tgt):
 
     path_finding_lines = []
 
-    line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=8, minLineLength=3, maxLineGap=20)
+    line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=13, minLineLength=1, maxLineGap=10)
+    # line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=13, minLineLength=1, maxLineGap=10)
+
 
     line_segments = remove_intersections(line_segments)
 
-    line_idx = find_lind_idx(line_segments)
+    # line_idx = find_lind_idx(line_segments)
 
-    centers, radii, votes = find_circles(img, range(20,500,5), 0.70, 30, line_idx)
+    # centers, radii, votes = find_circles(img, range(20,500,5), 0.70, 30, line_idx)
 
-    centers, radii, votes = circle_processing(centers, radii, votes, 0.7, 10)
+    # centers, radii, votes = circle_processing(centers, radii, votes, 0.7, 10)
 
     arc_list = []
-    arc_list = find_arcs(centers, radii, votes, img)
+    # arc_list = find_arcs(centers, radii, votes, img)
 
-    line_segments = remove_overlap_lines(line_segments, arc_list, 0.25, 2)
+    # line_segments = remove_overlap_lines(line_segments, arc_list, 0.25, 2)
 
     print("Finished segments")
 
