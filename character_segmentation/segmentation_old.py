@@ -8,7 +8,6 @@ from scipy.spatial.distance import cdist
 import os
 import math
 from datetime import datetime
-import copy
 
 def hough_peaks(H, numpeaks=1, threshold=None, nHoodSize=None):
     # Set default values
@@ -49,38 +48,36 @@ def hough_peaks(H, numpeaks=1, threshold=None, nHoodSize=None):
 
     return peaks
 
-def hough_circles_acc(img, BW, radius, line_idx = []):
+def hough_circles_acc(BW, radius, line_idx = []):
     # Compute Hough accumulator array for finding circles.
     #
     # BW: Binary (black and white) image containing edge pixels
     # radius: Radius of circles to look for, in pixels
 
     # Initialize accumulator array
-    H = np.zeros_like(img)
-    for edge in BW:
-        j = edge[0]
-        i = edge[1]
-        theta = np.arange(0, 361)
-        x_val = np.round((radius*np.cos(np.deg2rad(theta))) + j)
-        y_val = np.round((radius*np.sin(np.deg2rad(theta))) + i)
+    H = np.zeros_like(BW)
+    for i in range(BW.shape[0]):
+        for j in range(BW.shape[1]):
+            if ([i,j] not in line_idx) and BW[i, j] > 0:
+                theta = np.arange(0, 361)
+                x_val = np.round((radius*np.cos(np.deg2rad(theta))) + j)
+                y_val = np.round((radius*np.sin(np.deg2rad(theta))) + i)
 
-        for k in range(len(x_val)):
-            if (x_val[k] > 0 and x_val[k] < H.shape[0] and y_val[k] > 0 and y_val[k] < H.shape[1]):
-                H[int(x_val[k]), int(y_val[k])] = H[int(x_val[k]), int(y_val[k])] + 1
+                for k in range(len(x_val)):
+                    if (x_val[k] > 0 and x_val[k] < H.shape[0] and y_val[k] > 0 and y_val[k] < H.shape[1]):
+                        H[int(x_val[k]), int(y_val[k])] = H[int(x_val[k]), int(y_val[k])] + 1
+            else:
+                pass
 
     return H
 
-def find_circles(img, radius_range, thresh, nhood, line_idx = []):
+def find_circles(BW, radius_range, thresh, nhood, line_idx = []):
     centers = []
     radii = []
     votes = []
-    BW = cv2.findNonZero(img).tolist()
-    BW = [tuple(cur[0]) for cur in BW]
-    line_idx = [tuple(cur) for cur in line_idx]
-    BW = set(BW).difference(line_idx)
 
     for i in range(len(radius_range)):
-        H = hough_circles_acc(img, BW, radius_range[i], line_idx)
+        H = hough_circles_acc(BW, radius_range[i], line_idx)
         cur_centers = hough_peaks(H, numpeaks=5, threshold=thresh * np.max(H), nHoodSize=(nhood, nhood))
         for j in range(cur_centers.shape[0]):
             cur_vote = H[cur_centers[j,0], cur_centers[j,1]]
@@ -118,11 +115,7 @@ def find_circles(img, radius_range, thresh, nhood, line_idx = []):
 
 def find_arcs(centers, radii, votes, img):
     arc_list = []
-    # x, y = np.where(img != 0)
-    BW = cv2.findNonZero(img).tolist()
-    x = np.array([cur[0][1] for cur in BW])
-    y = np.array([cur[0][0] for cur in BW])
-
+    x, y = np.where(img != 0)
 
     for i in range(len(centers)):
         center = centers[i]
@@ -134,7 +127,7 @@ def find_arcs(centers, radii, votes, img):
         dist = np.sqrt((y - cx)**2 + (x - cy)**2)
 
         # Find the skeleton pixels that are within the circle
-        idx = np.where((dist < r[0] + 2) & (dist > r[0] - 2))[0]
+        idx = np.where((dist < r + 2) & (dist > r - 2))[0]
         if len(idx) == 0:
             continue
 
@@ -142,96 +135,45 @@ def find_arcs(centers, radii, votes, img):
         ex, ey = y[idx], x[idx]
 
         # Perform k-means clustering to separate the skeleton pixels into two groups
-        kmeans = KMeans(n_clusters=3).fit(np.column_stack((ex, ey)))
+        kmeans = KMeans(n_clusters=3, init='random').fit(np.column_stack((ex, ey)))
         kcenters = kmeans.cluster_centers_
 
         labels = kmeans.labels_
 
         # Determine which cluster contains the majority of the skeleton pixels
-        if np.sqrt((kcenters[0][1] - kcenters[1][1])**2 + (kcenters[0][0] - kcenters[1][0])**2) >= r/2:
+        if np.sqrt((kcenters[0][1] - kcenters[1][1])**2 + (kcenters[0][0] - kcenters[1][0])**2) > r/2:
             majority_label = np.argmax(np.bincount(labels))
 
             # Extract the coordinates of the skeleton pixels in the majority cluster
             ex, ey = ex[labels == majority_label], ey[labels == majority_label]
 
         # Compute the angle of each skeleton pixel relative to the circle center
+        angles = np.rad2deg(np.arctan2(-cy + ey, ex - cx))
 
-        
+        # Sort the angles in ascending order
+        idx = np.argsort(angles)
+        angles, ex, ey = angles[idx], ex[idx], ey[idx]
 
-        # angles = np.rad2deg(np.arctan2(-cy + ey, ex - cx))
-
-        # # Sort the angles in ascending order
-        # idx = np.argsort(angles)
-        # angles, ex, ey = angles[idx], ex[idx], ey[idx]
-
-        # # Compute the starting and ending angles of the arc
-        # start_angle, end_angle = angles[0], angles[-1]
+        # Compute the starting and ending angles of the arc
+        start_angle, end_angle = angles[0], angles[-1]
         start_idx = (ex[0], ey[0])
         end_idx = (ex[-1], ey[-1])
-
-        vect_start = (start_idx[0] - center[0], start_idx[1] - center[1])
-        start_angle = math.atan2(vect_start[1], vect_start[0])
-        start_angle = math.degrees(start_angle)
-
-        vect_end = (end_idx[0] - center[0], end_idx[1] - center[1])
-        end_angle = math.atan2(vect_end[1], vect_end[0])
-        end_angle = math.degrees(end_angle)
-
-        if (start_angle < 0):
-            start_angle += 360
-        if (end_angle < 0):
-            end_angle += 360
-
-        if start_angle > end_angle:
-            temp = start_angle
-            start_angle = end_angle
-            end_angle = temp
-
 
         # Add the arc to the list
         arc_list.append([(cx, cy), r[0], start_angle, end_angle, start_idx, end_idx])
 
     return arc_list
 
-def find_leftover_lines(img, rho, theta, threshold, minLineLength, maxLineGap, arc_idx = [], line_idx = []):
-    
-    img = copy.copy(img)
-    
-    if len(line_idx) > 0:
-        try:
-            img[np.array(line_idx)[:, 1], np.array(line_idx)[:, 0]] = 0
-        except:
-            pass
-    if len(arc_idx) > 0:
-        try:
-            img[np.array(arc_idx)[:, 1], np.array(arc_idx)[:, 0]] = 0
-        except:
-            pass
-
-    if img is not None:
-        lines = cv2.HoughLinesP(img, rho=rho, theta=theta, threshold=threshold, minLineLength=minLineLength, maxLineGap=maxLineGap)
-        # lines = cv2.HoughLinesP(img, rho=1, theta=0.01, threshold=13, minLineLength=1, maxLineGap=10)
-
-        line_segments = []
-        if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                line_segments.append([(x1, y1), (x2, y2)])
-
-        return line_segments
-
 def find_lines(img, rho, theta, threshold, minLineLength, maxLineGap):
-    if img is not None:
-        lines = cv2.HoughLinesP(img, rho=rho, theta=theta, threshold=threshold, minLineLength=minLineLength, maxLineGap=maxLineGap)
-        # lines = cv2.HoughLinesP(img, rho=1, theta=0.01, threshold=13, minLineLength=1, maxLineGap=10)
+    lines = cv2.HoughLinesP(img, rho=rho, theta=theta, threshold=threshold, minLineLength=minLineLength, maxLineGap=maxLineGap)
+    # lines = cv2.HoughLinesP(img, rho=1, theta=0.01, threshold=13, minLineLength=1, maxLineGap=10)
 
-        line_segments = []
-        if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                line_segments.append([(x1, y1), (x2, y2)])
+    line_segments = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        line_segments.append([(x1, y1), (x2, y2)])
 
-        return line_segments
+    return line_segments
 
 def get_image(file_path):
 
@@ -244,12 +186,11 @@ def get_image(file_path):
 
     return img
 
-def circle_processing(centers, radii, votes, thresh, min):
-    if len(centers) > 0:
-        good_circles = np.logical_and(votes > thresh * np.max(votes), votes > np.array([min])[0])
-        centers = centers[np.squeeze(good_circles)]
-        radii = radii[good_circles]
-        votes = np.take(votes, np.where(good_circles))[0]
+def circle_processing(centers, radii, votes):
+    good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([70])[0])
+    centers = centers[np.squeeze(good_circles)]
+    radii = radii[good_circles]
+    votes = np.take(votes, np.where(good_circles))[0]
 
     return centers, radii, votes
 
@@ -299,7 +240,7 @@ def remove_intersections(line_segments):
     return line_segments
 
 
-def remove_overlap_lines(line_segments, arc_list, sens, nhood):
+def remove_overlap_lines(line_segments, arc_list, sens):
 
     arc_list = arc_list
     line_segments = line_segments
@@ -314,14 +255,7 @@ def remove_overlap_lines(line_segments, arc_list, sens, nhood):
         for j in range(round(start_angle), round(end_angle)):
             x_val = center[0] + round(r*math.cos(math.radians(j)))
             y_val = center[1] + round(r*math.sin(math.radians(j)))
-
-            for i in range(nhood):
-                points_list.append([x_val,y_val + i])
-                points_list.append([x_val + i,y_val])
-                points_list.append([x_val + i,y_val + i])
-                points_list.append([x_val,y_val - i])
-                points_list.append([x_val - i,y_val])
-                points_list.append([x_val - i,y_val - i])
+            points_list.append([x_val,y_val])
 
         points_list = np.array(points_list)
 
@@ -348,17 +282,7 @@ def find_lind_idx(line_segments):
 
     return line_idx
 
-def find_arc_idx(arc_list):
-    arc_idx = []
-    for arc in arc_list:
-        center, r, start_angle, end_angle, start_idx, end_idx = arc
 
-        for j in range(round(start_angle), round(end_angle)):
-            x_val = center[0] + round(r*math.cos(math.radians(j)))
-            y_val = center[1] + round(r*math.sin(math.radians(j)))
-            arc_idx.append((x_val,y_val))
-
-    return arc_idx
 
 
 
@@ -380,16 +304,16 @@ if __name__ == "__main__":
 
     #     centers, radii, votes = find_circles(img, range(20,500,5), 0.7, 20)
 
-    #     centers, radii, votes = circle_processing(centers, radii, votes, 0.7, 10)
+    #     centers, radii, votes = circle_processing(centers, radii, votes)
 
     #     arc_list = []
     #     arc_list = find_arcs(centers, radii, votes, img)
 
-    #     line_segments = remove_overlap_lines(line_segments, arc_list, 0.05, 2)
+    #     line_segments = remove_overlap_lines(line_segments, arc_list, 0.05)
 
     #     toc = datetime.now()
 
-    #     line_arc_time.append((toc - tic).seconds)
+    #     line_arc_time.append(toc - tic)
 
     # # Benchmark just line segmentation
     # line_time = []
@@ -405,45 +329,31 @@ if __name__ == "__main__":
 
     #     toc = datetime.now()
 
-    #     line_time.append((toc - tic).seconds)
+    #     line_time.append(toc - tic)
 
     # Benchmark line segmentation with optimized arcs
     line_arc_optimized = []
-    for i in range(66,91):
-        print(i)
-
+    for i in range(65,91):
         img = get_image(os.path.join(os.path.dirname(__file__), "prototyping/chars/myfile" +  str(i) + ".bmp"))
 
         tic = datetime.now()
 
-        line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=13, minLineLength=1, maxLineGap=10)
+        line_segments = find_lines(img, rho=1, theta=0.01, threshold=50, minLineLength=5, maxLineGap=5)
 
         line_segments = remove_intersections(line_segments)
 
         line_idx = find_lind_idx(line_segments)
 
-        centers, radii, votes = find_circles(img, range(20,500,5), 0.70, 30, line_idx)
+        centers, radii, votes = find_circles(img, range(20,500,5), 0.7, 20, line_idx)
 
-        centers, radii, votes = circle_processing(centers, radii, votes, 0.7, 30)
+        centers, radii, votes = circle_processing(centers, radii, votes)
 
         arc_list = []
         arc_list = find_arcs(centers, radii, votes, img)
 
-        line_segments = remove_overlap_lines(line_segments, arc_list, 0.30, 5)
-
-        # arc_idx = find_arc_idx(arc_list)
-
-        # line_segments_new = find_leftover_lines(img, 1, 0.01, 5, 1, 10, arc_idx, line_idx)
-
-        # line_segments = line_segments + line_segments_new
-
-        # line_segments = remove_intersections(line_segments)
-
-        # line_segments = remove_overlap_lines(line_segments, arc_list, 0.25, 2)
-
         toc = datetime.now()
 
-        line_arc_optimized.append((toc - tic).seconds)
+        line_arc_optimized.append(toc - tic)
 
         fig, ax = plt.subplots()
         # ax.imshow(cv2.imread("C:/Users/yasse/Desktop/Senior Design/whiteboard-typewriter/ui/skeletonized/ss2.png"))
@@ -462,7 +372,7 @@ if __name__ == "__main__":
 
             # Draw arc on image
             # cv2.circle(img, center, int(r), (255,255,255), 2)
-            cv2.ellipse(img, center, (int(r), int(r)), 0, end_angle, start_angle, color, thickness)
+            cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
 
             # ellipse_img = cv2.ellipse(img, center, (int(r), int(r)), 0, start_angle, end_angle, color, thickness)
             # print(np.where(ellipse_img == 1))
@@ -477,30 +387,8 @@ if __name__ == "__main__":
         plt.show()
 
 
-    # # Bar plot
-    # #line_arc_time
-    # #line_time
-    # #line_arc_optimized
-    # barWidth = 0.25
 
-    # r1 = range(len(line_arc_time))
-    # r2 = [x + barWidth for x in r1]
-    # r3 = [x + barWidth for x in r2]
     
-    # # Create the bar chart
-    # plt.bar(r1, line_arc_time, color='red', width=barWidth, edgecolor='black', label='Lines + Arcs')
-    # plt.bar(r2, line_arc_optimized, color='green', width=barWidth, edgecolor='black', label='Lines + Arcs Optimized')
-    # plt.bar(r3, line_time, color='blue', width=barWidth, edgecolor='black', label='Lines')
-
-
-    # # Add xticks and labels
-    # plt.xticks([r + barWidth for r in range(len(line_arc_time))], ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'])
-
-    # # Add a legend
-    # plt.legend()
-
-    # # Show the plot
-    # plt.show()
 
     # line_segments = find_lines(img)
 
