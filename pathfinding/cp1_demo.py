@@ -3,10 +3,10 @@ import serial
 import time
 
 cadet = SpaceCadet(1)
-serialToMotor = serial.Serial('COM3')
-serialToMotor.write(str.encode("\r\n\r\n"))
-time.sleep(2)   # Wait for grbl to initialize
-serialToMotor.flushInput()  # Flush startup text in serial input
+#serialToMotor = serial.Serial('COM3')
+#serialToMotor.write(str.encode("\r\n\r\n"))
+#time.sleep(2)   # Wait for grbl to initialize
+#serialToMotor.flushInput()  # Flush startup text in serial input
 
 # STRAIGHT LINE TEST: Draw a box
 lines = []
@@ -25,12 +25,12 @@ if pathfinder.checkDone():
 
 print("Drawing box:")
 print(gcode)
-for line in gcode.splitlines():
-    line = line.strip()
-    print(f'Sending: {line}')
-    serialToMotor.write(str.encode(line + '\n'))
-    ack = serialToMotor.readline()
-    print(f' : {ack.strip()}')
+#for line in gcode.splitlines():
+#    line = line.strip()
+#    print(f'Sending: {line}')
+#    serialToMotor.write(str.encode(line + '\n'))
+#    ack = serialToMotor.readline()
+#    print(f' : {ack.strip()}')
 cadet.step()
 
 ################################################################
