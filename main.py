@@ -74,12 +74,14 @@ def pathfindingProcess(pack,spacer):
     return gcode
 
 def serialProcess(gcode, serialToMotor):
+    start = time.time()
     for line in gcode.splitlines():
         line = line.strip()
         print(f'Sending: {line}')
         serialToMotor.write(str.encode(line + '\n'))
         ack = serialToMotor.readline()
         print(f' : {ack.strip()}')
+    return time.time() - start
 
 
 if __name__ == "__main__":
@@ -118,8 +120,10 @@ if __name__ == "__main__":
             spacer.step()
             print(f'Time elapsed - Segmentation: {endSeg-startSeg}, Pathfinding: {time.time()-endSeg}')
             print(gcode)
+            gantryTime = "N/A"
             if serialFlag:
-                serialProcess(gcode, serialToMotor)
+                gantryTime = serialProcess(gcode, serialToMotor)
+            print(f'Time elapsed for gantry: {gantryTime}')
             print('\n')
 
         currentText = updatedText
