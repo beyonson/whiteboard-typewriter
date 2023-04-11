@@ -19,6 +19,15 @@ def segmentationProcess(tgt):
     # run segmentation on current file path
     print(tgt[0])
 
+    if tgt[1] == '^': # Placeholder character representing a reset
+        pack = PathfindingPackage("",str(tgt[1]),"Font","Reset")
+        return pack
+    if tgt[1] == '>': # Placeholder character representing a new line
+        pack = PathfindingPackage("",str(tgt[1]),"Font","Return")
+        return pack
+    if tgt[1] == '_':
+        pack = PathfindingPackage("",str(tgt[1]),"Font","Space")
+        return pack
     out = charCache.poll(tgt[1]) # Out is the collection of segments, not gcode, because the spacer still needs to determine where the letter will be drawn
     if out != "":
         pack = PathfindingPackage(out,str(tgt[1]),"Font","Cached")
@@ -71,12 +80,23 @@ def pathfindingProcess(pack,spacer):
     pathfinder = Pathfinder(lines,.025)
     if pack.type == "Cached":
         gcode = pathfinder.convert(spacer)
+        spacer.step()
         return pathfinder.getGCode()
+    elif pack.type == "Reset":
+        spacer.reset()
+        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
+    elif pack.type == "Return":
+        spacer.nextLine()
+        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
+    elif pack.type == "Space":
+        spacer.step()
+        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
     pathfinder.setVerbosity(False)
     pathfinder.setRipcord(5)
     pathfinder.pathfind()
     pathfinder.convert(spacer)
     gcode = pathfinder.getGCode()
+    spacer.step()
     charCache.add(pack.letter,pathfinder.segments)
 
     return gcode
@@ -97,7 +117,7 @@ if __name__ == "__main__":
     currentText = ""
     textfile = open("typedText.txt", "r+")
     updatedText = textfile.readline()
-    spacer = SpaceCadet(5)
+    spacer = SpaceCadet(3)
 
     if (len(sys.argv) > 2):
         print("ERROR: too many args")
@@ -125,7 +145,6 @@ if __name__ == "__main__":
             lines = segmentationProcess(segInfo)
             endSeg = time.time()
             gcode = pathfindingProcess(lines,spacer)
-            spacer.step()
             print(f'Time elapsed - Segmentation: {endSeg-startSeg}, Pathfinding: {time.time()-endSeg}')
             print(gcode)
             gantryTime = "N/A"
