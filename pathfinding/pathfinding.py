@@ -17,10 +17,11 @@ def clean():
     Node.resetCounter()
 
 class PathfindingPackage:
-    def __init__(self,lines,letter,font):
+    def __init__(self,lines,letter,font,type="None"):
         self.lines = lines
         self.letter = letter
         self.font = font
+        self.type = type
 
 class Line:
     def __init__(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
@@ -275,12 +276,14 @@ class Pathfinder:
             line.center = tuple(editLineC)
 
     # Converts edges in the optimized order into gcode
-    def convert(self,spacer):
+    def convert(self,spacer,lines=""):
         self.gcode = ""
+        if lines == "":
+            lines = self.segments
         curLine = ""
         lastPoint = (0,0)
         start = spacer.plot(lastPoint)
-        for line in self.segments:
+        for line in lines:
             curLine = ""
             if line.checkPickup(lastPoint):
                 if lastPoint != (0,0):

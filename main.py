@@ -11,11 +11,19 @@ from pathfinding import *
 from SpaceCadet import *
 import math
 
+charCache = CharacterCache(26)
+
 
 def segmentationProcess(tgt):
 
     # run segmentation on current file path
     print(tgt[0])
+
+    out = charCache.poll(tgt[1]) # Out is the collection of segments, not gcode, because the spacer still needs to determine where the letter will be drawn
+    if out != "":
+        pack = PathfindingPackage(out,str(tgt[1]),"Font","Cached")
+        return pack
+
     img = get_image(tgt[0])
 
     path_finding_lines = []
@@ -58,18 +66,18 @@ def segmentationProcess(tgt):
 
 
 def pathfindingProcess(pack,spacer):
-
-    package = pack
-    lines = package.lines
+    lines = pack.lines
     print(f'Lines: {len(lines)}')
-    # if package.letter == "Dummy":
-    #     lines == cacheQueue.get()
     pathfinder = Pathfinder(lines,.025)
+    if pack.type == "Cached":
+        gcode = pathfinder.convert(spacer)
+        return pathfinder.getGCode()
     pathfinder.setVerbosity(False)
     pathfinder.setRipcord(5)
     pathfinder.pathfind()
     pathfinder.convert(spacer)
     gcode = pathfinder.getGCode()
+    charCache.add(pack.letter,pathfinder.segments)
 
     return gcode
 
@@ -89,7 +97,7 @@ if __name__ == "__main__":
     currentText = ""
     textfile = open("typedText.txt", "r+")
     updatedText = textfile.readline()
-    spacer = SpaceCadet(1)
+    spacer = SpaceCadet(5)
 
     if (len(sys.argv) > 2):
         print("ERROR: too many args")
