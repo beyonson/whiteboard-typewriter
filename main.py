@@ -132,25 +132,26 @@ if __name__ == "__main__":
         serialToMotor = serial.Serial('COM3') # /dev/ttyACM0
 
     # check to see if text has changed
-    while (updatedText != currentText):
-        # if text is changed, send to yasser and update
-        for i in range(len(currentText), len(updatedText)-1):
-            asciiNum = ord(updatedText[i])
-            # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
-            filename = "character_segmentation/prototyping/chars/myfile" + str(asciiNum) + ".bmp"
-            segInfo = [filename, chr(asciiNum)]
+    while(True):
+        if (updatedText != currentText):
+            # if text is changed, send to yasser and update
+            for i in range(len(currentText), len(updatedText)-1):
+                asciiNum = ord(updatedText[i])
+                # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
+                filename = "character_segmentation/prototyping/chars/myfile" + str(asciiNum) + ".bmp"
+                segInfo = [filename, chr(asciiNum)]
 
-            startSeg = time.time()
-            print(updatedText[i])
-            lines = segmentationProcess(segInfo)
-            endSeg = time.time()
-            gcode = pathfindingProcess(lines,spacer)
-            print(f'Time elapsed - Segmentation: {endSeg-startSeg}, Pathfinding: {time.time()-endSeg}')
-            print(gcode)
-            gantryTime = "N/A"
-            if serialFlag:
-                gantryTime = serialProcess(gcode, serialToMotor)
-            print(f'Time elapsed for gantry: {gantryTime}')
-            print('\n')
+                startSeg = time.time()
+                print(updatedText[i])
+                lines = segmentationProcess(segInfo)
+                endSeg = time.time()
+                gcode = pathfindingProcess(lines,spacer)
+                print(f'Time elapsed - Segmentation: {endSeg-startSeg}, Pathfinding: {time.time()-endSeg}')
+                print(gcode)
+                gantryTime = "N/A"
+                if serialFlag:
+                    gantryTime = serialProcess(gcode, serialToMotor)
+                print(f'Time elapsed for gantry: {gantryTime}')
+                print('\n')
 
-        currentText = updatedText
+            currentText = updatedText
