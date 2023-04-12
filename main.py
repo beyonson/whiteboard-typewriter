@@ -116,7 +116,6 @@ if __name__ == "__main__":
 
     currentText = ""
     textfile = open("typedText.txt", "r+")
-    updatedText = textfile.readline()
     spacer = SpaceCadet(3)
 
     if (len(sys.argv) > 2):
@@ -133,6 +132,7 @@ if __name__ == "__main__":
 
     # check to see if text has changed
     while(True):
+        updatedText = textfile.readline()
         if (updatedText != currentText):
             # if text is changed, send to yasser and update
             for i in range(len(currentText), len(updatedText)-1):
