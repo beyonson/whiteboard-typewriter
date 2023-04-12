@@ -4,6 +4,7 @@ class CharacterCache:
     _RECENCYWEIGHT = 5
     _FREQUENCYMULT = 1
     def __init__(self,size=10):
+        self.size = size
         self.cache = []
         self.priority = []
         self.letterFreq = {
@@ -40,7 +41,7 @@ class CharacterCache:
             if self.cache[i][0] == letter:
                 self.priority[i] = weight
                 return
-        if len(self.cache) < 10:
+        if len(self.cache) < self.size:
             self.cache.append(tuple((letter,lines)))
             self.priority.append(weight)
         else:
@@ -67,3 +68,11 @@ class CharacterCache:
     def clear(self):
         self.cache = []
         self.priority = []
+    def print(self):
+        contents = ""
+        frequency = ""
+        for i in range(len(self.cache)):
+            contents += str(self.cache[i][0]) + " "
+            frequency += str(self.priority[i]) + " "
+        print(contents)
+        print(frequency)
