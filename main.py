@@ -132,7 +132,7 @@ if __name__ == "__main__":
         serialToMotor = serial.Serial('COM3') # /dev/ttyACM0
 
     # check to see if text has changed
-    if (updatedText != currentText):
+    while (updatedText != currentText):
         # if text is changed, send to yasser and update
         for i in range(len(currentText), len(updatedText)-1):
             asciiNum = ord(updatedText[i])
