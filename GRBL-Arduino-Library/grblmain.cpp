@@ -53,6 +53,8 @@ int startGrbl(void)
   memset(&sys, 0, sizeof(sys));  // Clear all system variables
   sys.abort = true;   // Set abort to complete initialization
   sys.state = STATE_INIT;  // Set alarm state to indicate unknown initial position
+
+  limits_go_home();
   
   for(;;) {
   
