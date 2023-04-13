@@ -131,8 +131,7 @@ if __name__ == "__main__":
         serialToMotor = serial.Serial('COM3') # /dev/ttyACM0
 
     # check to see if text has changed
-    j = True
-    while(j):
+    while(True):
         updatedText = textfile.readline()
         if (updatedText != currentText):
             # if text is changed, send to yasser and update
@@ -156,4 +155,3 @@ if __name__ == "__main__":
                 print('\n')
 
             currentText = updatedText
-            j = False
