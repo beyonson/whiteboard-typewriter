@@ -218,14 +218,15 @@ uint8_t protocol_execute_line(char *line)
         }
         break;               
       case 'H' : // Perform homing cycle
-        if (bit_istrue(settings.flags,BITFLAG_HOMING_ENABLE)) { 
-          // Only perform homing if Grbl is idle or lost.
-          if ( sys.state==STATE_IDLE || sys.state==STATE_ALARM ) { 
-            mc_go_home(); 
-            if (!sys.abort) { protocol_execute_startup(); } // Execute startup scripts after successful homing.
-          } else { return(STATUS_IDLE_ERROR); }
-        } else { return(STATUS_SETTING_DISABLED); }
-        break;
+        limits_go_home();
+//         if (bit_istrue(settings.flags,BITFLAG_HOMING_ENABLE)) { 
+//           // Only perform homing if Grbl is idle or lost.
+//           if ( sys.state==STATE_IDLE || sys.state==STATE_ALARM ) { 
+//             mc_go_home(); 
+//             if (!sys.abort) { protocol_execute_startup(); } // Execute startup scripts after successful homing.
+//           } else { return(STATUS_IDLE_ERROR); }
+//         } else { return(STATUS_SETTING_DISABLED); }
+//         break;
 //    case 'J' : break;  // Jogging methods
       // TODO: Here jogging can be placed for execution as a seperate subprogram. It does not need to be 
       // susceptible to other runtime commands except for e-stop. The jogging function is intended to
