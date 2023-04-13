@@ -37,7 +37,7 @@ def segmentationProcess(tgt):
 
     path_finding_lines = []
 
-    line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=13, minLineLength=1, maxLineGap=10)
+    line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=12, minLineLength=1, maxLineGap=10)
     # line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=13, minLineLength=1, maxLineGap=10)
 
 
@@ -131,7 +131,8 @@ if __name__ == "__main__":
         serialToMotor = serial.Serial('COM3') # /dev/ttyACM0
 
     # check to see if text has changed
-    while(True):
+    j = True
+    while(j):
         updatedText = textfile.readline()
         if (updatedText != currentText):
             # if text is changed, send to yasser and update
@@ -155,3 +156,4 @@ if __name__ == "__main__":
                 print('\n')
 
             currentText = updatedText
+            j = False

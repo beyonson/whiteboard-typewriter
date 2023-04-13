@@ -169,13 +169,14 @@ class Pathfinder:
                 self.minPath = self.path.copy() # Set current path as minPath
             self.path.pop(-1) # Remove last entry from path
             return True # Return to last recursion
-        validPath = 0 # Preset flag to 0)
+        validPath = 0 # Preset flag to 0
         for i in range(len(self.dict[nodeID])): # Check unvisited edges
             if vEdges[self.dict[nodeID][i].id] == 0: # If edge i is unvisited
                 self.path.append(tuple((self.dict[nodeID][i].id,-1))) # Add i to path
                 self.dfs(vEdges[:],self.dict[nodeID][i].otherNode(self.nodes[nodeID]).id,cost) # Recurse on node opposite of nodeID over edge i
                 validPath = 1 # Mark that a valid path was found
         if validPath == 0: # If all edges around nodeID were already visited
+            idealNodes = []
             priorGood = False # Flag marking whether an optimal jump point is found
             for i in range(len(self.nodes)): # Search over all nodes
                 possEdges = 0 # Counter to count each unvisited edge attached to node i
@@ -184,17 +185,33 @@ class Pathfinder:
                         possEdges += 1 # Increment counter
                 if possEdges == 1: # If there is only one unvisited edge from node i
                     priorGood = True # Mark that an optimal jump point has been found
-                    for j in range(len(self.dict[i])): # Search through all attached edges to node i
-                        if vEdges[self.dict[i][j].id] == 0: # If edge is unvisited
+                    idealNodes.append(i)
+            if len(idealNodes) <= 3:
+                for i in range(len(idealNodes)):
+                    for j in range(len(self.dict[idealNodes[i]])): # Search through all attached edges to node i
+                        if vEdges[self.dict[idealNodes[i]][j].id] == 0: # If edge is unvisited
                             #print(f'Jump to {i}')
-                            if self.edges[self.dict[i][j].id].nodes[0].id != i:
-                                self.path.append(tuple((self.edges[self.dict[i][j].id].id,nodeID))) # Add unvisited edge to path
-                                if self.dfs(vEdges[:],self.edges[self.dict[i][j].id].nodes[0].id,cost): # Jump to and recurse over target node of unvisited edge
+                            if self.edges[self.dict[idealNodes[i]][j].id].nodes[0].id != i:
+                                self.path.append(tuple((self.edges[self.dict[idealNodes[i]][j].id].id,nodeID))) # Add unvisited edge to path
+                                if self.dfs(vEdges[:],self.edges[self.dict[idealNodes[i]][j].id].nodes[0].id,cost): # Jump to and recurse over target node of unvisited edge
                                     break
                             else:
-                                self.path.append(tuple((self.edges[self.dict[i][j].id].id,nodeID))) # Add unvisited edge to path
-                                if self.dfs(vEdges[:],self.edges[self.dict[i][j].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
+                                self.path.append(tuple((self.edges[self.dict[idealNodes[i]][j].id].id,nodeID))) # Add unvisited edge to path
+                                if self.dfs(vEdges[:],self.edges[self.dict[idealNodes[i]][j].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
                                     break
+            else:
+                ideal = self.shortestJump(nodeID,idealNodes)
+                for i in range(len(self.dict[ideal])): # Search through all attached edges to node i
+                    if vEdges[self.dict[ideal][i].id] == 0: # If edge is unvisited
+                        #print(f'Jump to {i}')
+                        if self.edges[self.dict[ideal][i].id].nodes[0].id != ideal:
+                            self.path.append(tuple((self.edges[self.dict[ideal][i].id].id,nodeID))) # Add unvisited edge to path
+                            if self.dfs(vEdges[:],self.edges[self.dict[ideal][i].id].nodes[0].id,cost): # Jump to and recurse over target node of unvisited edge
+                                break
+                        else:
+                            self.path.append(tuple((self.edges[self.dict[ideal][i].id].id,nodeID))) # Add unvisited edge to path
+                            if self.dfs(vEdges[:],self.edges[self.dict[ideal][i].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
+                                break
             if not priorGood: # If no optimal jump point is found
                 for i in range(len(self.edges)): # Search over all edges
                     if vEdges[i] == 0: # If edge i has not been visited
@@ -207,6 +224,16 @@ class Pathfinder:
         if len(self.path) > 0: # If this is not the first node
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
+
+    def shortestJump(self,source,dests):
+        minDist = 1000000
+        ideal = -1
+        for i in range(len(dests)):
+            dist = abs(math.sqrt((self.nodes[dests[i]].x-self.nodes[source].x)**2 + (self.nodes[dests[i]].y-self.nodes[source].y)**2))
+            if dist < minDist:
+                minDist = dist
+                ideal = dests[i]
+        return ideal
 
     def setRipcord(self,rip=5):
         self.ripcord = rip
