@@ -314,48 +314,23 @@ class Pathfinder:
             curLine = ""
             if line.checkPickup(lastPoint):
                 if lastPoint != (0,0):
-                    curLine += "G01 X" + str(spacer.plot(lastPoint)[0]) + " Y" + str(spacer.plot(lastPoint)[1]) + " Z0\n"
-                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
-                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z1\n"
+                    curLine += "G01X" + str(spacer.plot(lastPoint)[0]) + "Y" + str(spacer.plot(lastPoint)[1]) + "Z0\n"
+                curLine += "G01X" + str(spacer.plot(line.start)[0]) + "Y" + str(spacer.plot(line.start)[1]) + "Z0\n"
+                curLine += "G01X" + str(spacer.plot(line.start)[0]) + "Y" + str(spacer.plot(line.start)[1]) + "Z1\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
-                curLine += "G01 "
+                curLine += "G01"
             else:
                 if line.checkDirection():
-                    curLine += "G02 "
+                    curLine += "G02"
                 else:
-                    curLine += "G03 "
-            curLine += "X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z1"
+                    curLine += "G03"
+            curLine += "X" + str(spacer.plot(line.end)[0]) + "Y" + str(spacer.plot(line.end)[1]) + "Z1"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
-                curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
+                curLine += "I" + str(line.getRelativeOf(line.center)[0]) + "J" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
-        self.gcode += "G01 X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z0" + "\n"
-
-    # Variant of convert function that keeps the Z value set to 0 for debugging purposes.
-    def convertConstZ(self,spacer):
-        self.gcode = ""
-        curLine = ""
-        lastPoint = (0,0)
-        start = spacer.plot(lastPoint)
-        self.gcode += "G01 X" + str(start[0]) + " Y" + str(start[1]) + " Z0\n"
-        for line in self.segments:
-            curLine = ""
-            if line.checkPickup(lastPoint):
-                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
-                lastPoint = line.end
-            if line.center[0] == -1 and line.center[1] == -1:
-                curLine += "G01 "
-            else:
-                if line.checkDirection():
-                    curLine += "G02 "
-                else:
-                    curLine += "G03 "
-            curLine += "X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z0"
-            lastPoint = line.end
-            if line.center[0] != -1 and line.center[1] != -1:
-                curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
-            self.gcode += curLine + "\n"
+        self.gcode += "G01X" + str(spacer.plot(line.end)[0]) + "Y" + str(spacer.plot(line.end)[1]) + "Z0" + "\n"
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
