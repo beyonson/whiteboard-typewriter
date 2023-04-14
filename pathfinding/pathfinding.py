@@ -329,8 +329,8 @@ class Pathfinder:
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += "I" + str(line.getRelativeOf(line.center)[0]) + "J" + str(line.getRelativeOf(line.center)[1])
-            self.gcode += curLine + "\n"
-        self.gcode += "G01X" + str(spacer.plot(line.end)[0]) + "Y" + str(spacer.plot(line.end)[1]) + "Z0" + "\n"
+            self.gcode += curLine + "\nF100"
+        self.gcode += "G01X" + str(spacer.plot(line.end)[0]) + "Y" + str(spacer.plot(line.end)[1]) + "Z0" + "F100\n"
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
