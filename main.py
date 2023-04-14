@@ -153,8 +153,10 @@ if __name__ == "__main__":
 
     # check to see if text has changed
     while(True):
+        textfile.seek(0)
         updatedText = textfile.readline()
-        if (updatedText != currentText):
+        updatedText = updatedText.strip()
+        if (updatedText != currentText and len(updatedText) > len(currentText)):
             # if text is changed, send to yasser and update
             for i in range(len(currentText), len(updatedText)):
                 asciiNum = ord(updatedText[i])
