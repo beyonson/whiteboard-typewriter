@@ -314,9 +314,9 @@ class Pathfinder:
             curLine = ""
             if line.checkPickup(lastPoint):
                 if lastPoint != (0,0):
-                    curLine += "G01X" + str(spacer.plot(lastPoint)[0]) + "Y" + str(spacer.plot(lastPoint)[1]) + "Z0\n"
-                curLine += "G01X" + str(spacer.plot(line.start)[0]) + "Y" + str(spacer.plot(line.start)[1]) + "Z0\n"
-                curLine += "G01X" + str(spacer.plot(line.start)[0]) + "Y" + str(spacer.plot(line.start)[1]) + "Z1\n"
+                    curLine += "G01X-" + str(spacer.plot(lastPoint)[0]) + "Y-" + str(spacer.plot(lastPoint)[1]) + "Z0\n"
+                curLine += "G01X-" + str(spacer.plot(line.start)[0]) + "Y-" + str(spacer.plot(line.start)[1]) + "Z0\n"
+                curLine += "G01X-" + str(spacer.plot(line.start)[0]) + "Y-" + str(spacer.plot(line.start)[1]) + "Z1\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01"
@@ -325,12 +325,12 @@ class Pathfinder:
                     curLine += "G02"
                 else:
                     curLine += "G03"
-            curLine += "X" + str(spacer.plot(line.end)[0]) + "Y" + str(spacer.plot(line.end)[1]) + "Z1"
+            curLine += "X-" + str(spacer.plot(line.end)[0]) + "Y-" + str(spacer.plot(line.end)[1]) + "Z1"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
-                curLine += "I" + str(line.getRelativeOf(line.center)[0]) + "J" + str(line.getRelativeOf(line.center)[1])
+                curLine += "I-" + str(line.getRelativeOf(line.center)[0]) + "J-" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\nF100"
-        self.gcode += "G01X" + str(spacer.plot(line.end)[0]) + "Y" + str(spacer.plot(line.end)[1]) + "Z0" + "F100\n"
+        self.gcode += "G01X-" + str(spacer.plot(line.end)[0]) + "Y-" + str(spacer.plot(line.end)[1]) + "Z0" + "F100\n"
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
