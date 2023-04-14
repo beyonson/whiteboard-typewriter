@@ -112,16 +112,18 @@ def serialProcess(gcode, serialToMotor):
     return time.time() - start
 
 def serialInit(serialToMotor):
+    f = open('config.gcode','r');
     print("IN")
     serialToMotor = serial.Serial('COM3') # /dev/ttyACM0
     serialToMotor.write(str.encode("\r\n\r\n"))
     time.sleep(2)   # Wait for grbl to initialize
     serialToMotor.flushInput()  # Flush startup text in serial input
-    serialToMotor.write(str.encode("$$\n$1 = 25    (step idle delay, msec)\n$0 = 10    (step pulse, usec)\n$2 = 0    (step port invert mask:00000000)\n$3 = 0    (dir port invert mask:00000000)\n$4 = 0    (step enable invert, bool)\n$5 = 0    (limit pins invert, bool)\n$6 = 0    (probe pin invert, bool)\n$10 = 1    (status report mask:00000001)\n$11 = 0.010    (junction deviation, mm)\n$12 = 0.002    (arc tolerance, mm)\n$20 = 0    (soft limits, bool)\n$13 = 0    (report inches, bool)\n$21 = 0    (hard limits, bool)\n$22 = 1    (homing cycle, bool)\n$23 = 3    (homing dir invert mask:00000011)\n$24 = 25.000    (homing feed, mm/min)\n$25 = 50.000    (homing seek, mm/min)\n$26 = 250    (homing debounce, msec)\n$27 = 1.000    (homing pull-off, mm)\n$100 = 250.000    (x, step/mm)\n$101 = 250.000    (y, step/mm)\n$102 = 250.000    (z, step/mm)\n$110 = 500.000    (x max rate, mm/min)\n$111 = 500.000    (y max rate, mm/min)\n$112 = 500.000    (z max rate, mm/min)\n$120 = 10.000    (x accel, mm/sec^2)\n$121 = 10.000    (y accel, mm/sec^2)\n$122 = 10.000    (z accel, mm/sec^2)\n$130 = 20000.000    (x max travel, mm)\n$131 = 20000.000    (y max travel, mm)\n$132 = 200.000    (z max travel, mm)"))
-    ack = serialToMotor.readline()
-    print(f' : {ack.strip()}')
-    serialToMotor.write(str.encode("$G"))
-    serialToMotor.write(str.encode("$H"))
+    for line in f:
+        l = line.strip() # Strip all EOL characters for streaming
+        print(f'Sending: {l}')
+        serialToMotor.write(str.encode(l + '\n')) # Send g-code block to grbl
+        grbl_out = serialToMotor.readline() # Wait for grbl response with carriage return
+        print(f' : {grbl_out.strip()}')
 
 if __name__ == "__main__":
 
