@@ -112,7 +112,7 @@ def serialProcess(gcode, serialToMotor):
     return time.time() - start
 
 def serialInit(serialToMotor):
-    f = open('config.gcode','r');
+    f = open('gcode/config.gcode','r');
     print("IN")
     serialToMotor.write(str.encode("\r\n\r\n"))
     time.sleep(2)   # Wait for grbl to initialize
