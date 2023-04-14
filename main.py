@@ -114,7 +114,6 @@ def serialProcess(gcode, serialToMotor):
 def serialInit(serialToMotor):
     f = open('config.gcode','r');
     print("IN")
-    serialToMotor = serial.Serial('COM3') # /dev/ttyACM0
     serialToMotor.write(str.encode("\r\n\r\n"))
     time.sleep(2)   # Wait for grbl to initialize
     serialToMotor.flushInput()  # Flush startup text in serial input
@@ -138,9 +137,10 @@ if __name__ == "__main__":
         serialFlag = True
     else:
         serialFlag = False
-
+    
     serialToMotor = ''
     if serialFlag:
+        serialToMotor = serial.Serial('/dev/ttyACM0', 115200) # /dev/ttyACM0
         serialInit(serialToMotor)
 
     # check to see if text has changed
