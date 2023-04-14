@@ -316,7 +316,7 @@ class Pathfinder:
             curLine = ""
             if line.checkPickup(lastPoint):
                 if self.currentCode != 1:
-                    curLine += "G01 F100 "
+                    curLine += "G01 F500 "
                     self.currentCode = 1
                 if lastPoint != (0,0):
                     curLine += "Z0\n"
@@ -325,16 +325,16 @@ class Pathfinder:
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 if self.currentCode != 1:
-                    curLine += "G01 F100 "
+                    curLine += "G01 F500 "
                     self.currentCode = 1
             else:
                 if line.checkDirection():
                     if self.currentCode != 2:
-                        curLine += "G02 F100 "
+                        curLine += "G02 F500 "
                         self.currentCode = 2
                 else:
                     if self.currentCode != 3:
-                        curLine += "G03 F100 "
+                        curLine += "G03 F500 "
                         self.currentCode = 3
             curLine += "X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z1"
             lastPoint = line.end
@@ -342,7 +342,7 @@ class Pathfinder:
                 curLine += " I-" + str(line.getRelativeOf(line.center)[0]) + " J-" + str(line.getRelativeOf(line.center)[1])
             self.gcode += curLine + "\n"
         if self.currentCode != 1:
-            self.gcode += "G01 F100 "
+            self.gcode += "G01 F500 "
             self.currentCode = 1
         self.gcode += "X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z0" + "\n"
 
