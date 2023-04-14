@@ -84,13 +84,13 @@ def pathfindingProcess(pack,spacer):
         return pathfinder.getGCode()
     elif pack.type == "Reset":
         spacer.reset()
-        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
+        return "G01 X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     elif pack.type == "Return":
         spacer.nextLine()
-        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
+        return "G01 X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     elif pack.type == "Space":
         spacer.step()
-        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
+        return "G01 X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     pathfinder.setVerbosity(False)
     pathfinder.setRipcord(5)
     pathfinder.pathfind()
@@ -137,10 +137,10 @@ if __name__ == "__main__":
         serialFlag = True
     else:
         serialFlag = False
-    
+
     serialToMotor = ''
     if serialFlag:
-        serialToMotor = serial.Serial('/dev/ttyACM0', 115200) # /dev/ttyACM0
+        serialToMotor = serial.Serial('COM3', 9600) # /dev/ttyACM0
         serialInit(serialToMotor)
 
     # check to see if text has changed
