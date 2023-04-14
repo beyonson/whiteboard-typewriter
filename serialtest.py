@@ -9,7 +9,7 @@ import time
 #    serialToMotor.write(str.encode(line))
 
 # Open grbl serial port
-s = serial.Serial('COM3',9600)
+s = serial.Serial('COM4',115200)
 
 # Open g-code file
 f = open('gcode/singleline.gcode','r');
