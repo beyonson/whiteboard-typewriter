@@ -104,16 +104,17 @@ class Pathfinder:
         clean()
         self.segments = lines
         self.verbose = False
-        self.nodes = [] #     nodes          : List of all nodes, with the index being each ones id.
-        self.edges = [] #     edges          : List of all edges, with the index being each ones id.
-        self.dict = {} #      dict           : Dictionary with the id of each node as a Key, and each connected edge as a Value.
-        self.path = [] #      path           : A list of the edges used and jumps in the working path. Each edge is indicated by its id, and jumps by either -1 or destination node.
-        self.minPath = [] #   minPath        : A list of the edges used and jumps in the optimal path. Each edge is indicated by its id, and jumps by either -1 or destination node
-        self.costs = [] #     costs          : A list of the relative costs for each edge in a character for a given starting node. Each edge is indicated by its id.
-        self.startPt = 0 #    startPt        : Integer to keep track of what node was chosen as the starting point.
-        self.done = False #   done           : Flag raised when pathfinding has been completed.
-        self.gcode = "" #     gcode          : String holding complete gcode for given character.
-        self.ripcord = -1 #   ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
+        self.nodes = [] #      nodes          : List of all nodes, with the index being each ones id.
+        self.edges = [] #      edges          : List of all edges, with the index being each ones id.
+        self.dict = {} #       dict           : Dictionary with the id of each node as a Key, and each connected edge as a Value.
+        self.path = [] #       path           : A list of the edges used and jumps in the working path. Each edge is indicated by its id, and jumps by either -1 or destination node.
+        self.minPath = [] #    minPath        : A list of the edges used and jumps in the optimal path. Each edge is indicated by its id, and jumps by either -1 or destination node
+        self.costs = [] #      costs          : A list of the relative costs for each edge in a character for a given starting node. Each edge is indicated by its id.
+        self.startPt = 0 #     startPt        : Integer to keep track of what node was chosen as the starting point.
+        self.done = False #    done           : Flag raised when pathfinding has been completed.
+        self.gcode = "" #      gcode          : String holding complete gcode for given character.
+        self.ripcord = -1 #    ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
+        self.currentCode = -1 #currentCode    : Integer holding the current gcode command in place
         self.standardize()
         self.snap(sensitivity)
 
@@ -304,6 +305,7 @@ class Pathfinder:
 
     # Converts edges in the optimized order into gcode
     def convert(self,spacer,lines=""):
+        self.currentCode = 0
         self.gcode = ""
         if lines == "":
             lines = self.segments
@@ -313,24 +315,36 @@ class Pathfinder:
         for line in lines:
             curLine = ""
             if line.checkPickup(lastPoint):
+                if self.currentCode != 1:
+                    curLine += "G01 F100 "
+                    self.currentCode = 1
                 if lastPoint != (0,0):
-                    curLine += "G01 Z0 F100\n"
-                curLine += "G01 X-" + str(spacer.plot(line.start)[0]) + " Y-" + str(spacer.plot(line.start)[1]) + " Z0 F100\n"
-                curLine += "G01 Z1 F100\n"
+                    curLine += "Z0\n"
+                curLine += "X-" + str(spacer.plot(line.start)[0]) + " Y-" + str(spacer.plot(line.start)[1]) + "\n"
+                curLine += "Z1\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
-                curLine += "G01 "
+                if self.currentCode != 1:
+                    curLine += "G01 F100 "
+                    self.currentCode = 1
             else:
                 if line.checkDirection():
-                    curLine += "G02 "
+                    if self.currentCode != 2:
+                        curLine += "G02 F100 "
+                        self.currentCode = 2
                 else:
-                    curLine += "G03 "
+                    if self.currentCode != 3:
+                        curLine += "G03 F100 "
+                        self.currentCode = 3
             curLine += "X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z1"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I-" + str(line.getRelativeOf(line.center)[0]) + " J-" + str(line.getRelativeOf(line.center)[1])
-            self.gcode += curLine + " F100\n"
-        self.gcode += "G01 X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z0" + " F100\n"
+            self.gcode += curLine + "\n"
+        if self.currentCode != 1:
+            self.gcode += "G01 F100 "
+            self.currentCode = 1
+        self.gcode += "X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z0" + "\n"
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
