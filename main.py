@@ -108,6 +108,14 @@ def serialProcess(gcode, serialToMotor):
         print(f'Sending: {line}')
         serialToMotor.write(str.encode(line + '\n'))
         ack = serialToMotor.readline()
+        print(ack)
+
+        while ack != b'ok\r\n':
+            print("OOOOOOOOOOOOOOOPPPPPPPPPPPPPPSSSSSSSSSSSSSSS")
+            print(f'Sending: {line}')
+            serialToMotor.write(str.encode(line + '\n'))
+            ack = serialToMotor.readline()
+
         print(f' : {ack.strip()}')
     return time.time() - start
 
