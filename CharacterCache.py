@@ -4,6 +4,7 @@ class CharacterCache:
     _RECENCYWEIGHT = 5
     _FREQUENCYMULT = 1
     def __init__(self,size=10):
+        self.size = size
         self.cache = []
         self.priority = []
         self.letterFreq = {
@@ -34,10 +35,14 @@ class CharacterCache:
             "J" : 0.10,
             "Z" : 0.07
         }
-    def add(self,letter,gcode):
+    def add(self,letter,lines):
         weight = CharacterCache._RECENCYWEIGHT + round(self.getFrequency(letter) * CharacterCache._FREQUENCYMULT)
-        if len(self.cache) < 10:
-            self.cache.append(tuple((letter,gcode)))
+        for i in range(len(self.cache)):
+            if self.cache[i][0] == letter:
+                self.priority[i] = weight
+                return
+        if len(self.cache) < self.size:
+            self.cache.append(tuple((letter,lines)))
             self.priority.append(weight)
         else:
             min = 100
@@ -47,16 +52,27 @@ class CharacterCache:
                     lowest = i
                     min = self.priority[i]
             if weight >= min:
-                self.cache[lowest] = tuple((letter,gcode))
+                self.cache[lowest] = tuple((letter,lines))
                 self.priority[lowest] = weight
     def poll(self,letter):
-        gcode = ""
+        lines = ""
         for i in range(len(self.priority)):
             if self.priority[i] > 0:
                 self.priority[i] -= 1
         for lt in self.cache:
             if lt[0] == letter:
-                gcode = lt[1]
-        return gcode
+                lines = lt[1]
+        return lines
     def getFrequency(self,letter):
         return self.letterFreq[letter]
+    def clear(self):
+        self.cache = []
+        self.priority = []
+    def print(self):
+        contents = ""
+        frequency = ""
+        for i in range(len(self.cache)):
+            contents += str(self.cache[i][0]) + " "
+            frequency += str(self.priority[i]) + " "
+        print(contents)
+        print(frequency)

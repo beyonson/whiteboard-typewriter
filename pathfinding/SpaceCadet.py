@@ -1,10 +1,10 @@
 class SpaceCadet:
-    xMax = 4 # 60
-    yMax = 3 # 40
+    xMax = 60 # 60
+    yMax = 40 # 40
     def __init__(self,size):
         self.size = size
         self.x = 0
-        self.y = SpaceCadet.yMax - size
+        self.y = 0
     def plot(self,coord):
         x = (coord[0] * self.size) + self.x
         #x = coord[0] #+ self.x
@@ -15,4 +15,14 @@ class SpaceCadet:
         self.x += self.size
         if self.x + self.size > SpaceCadet.xMax:
             self.x = 0
-            self.y -= self.size
+            self.y += self.size
+            if self.y > SpaceCadet.yMax:
+                self.y = SpaceCadet.yMax
+    def reset(self):
+        self.x = 0
+        self.y = 0
+    def nextLine(self):
+        self.x = 0
+        self.y += self.size
+        if self.y > SpaceCadet.yMax:
+            self.y = SpaceCadet.yMax

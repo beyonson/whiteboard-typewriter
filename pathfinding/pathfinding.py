@@ -10,16 +10,18 @@
 
 import math
 from SpaceCadet import *
+import time
 
 def clean():
     Edge.resetCounter()
     Node.resetCounter()
 
 class PathfindingPackage:
-    def __init__(self,lines,letter,font):
+    def __init__(self,lines,letter,font,type="None"):
         self.lines = lines
         self.letter = letter
         self.font = font
+        self.type = type
 
 class Line:
     def __init__(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
@@ -66,6 +68,8 @@ class Node:
         Node.__COUNTER += 1
     def addEdge(self,edge):
         self.edges.append(edge)
+    def coords(self):
+        return tuple((self.x,self.y))
     @classmethod
     def resetCounter(cls):
         cls.__COUNTER = 0
@@ -78,7 +82,7 @@ class Edge:
         self.id = Edge.__COUNTER
         Edge.__COUNTER += 1
     def otherNode(self,node):
-        if self.nodes[0] == node:
+        if self.nodes[0].id == node.id:
             return self.nodes[1]
         else:
             return self.nodes[0]
@@ -96,7 +100,7 @@ class Edge:
         cls.__COUNTER = 0
 
 class Pathfinder:
-    def __init__(self,lines):
+    def __init__(self,lines,sensitivity=.025):
         clean()
         self.segments = lines
         self.verbose = False
@@ -109,28 +113,40 @@ class Pathfinder:
         self.startPt = 0 #    startPt        : Integer to keep track of what node was chosen as the starting point.
         self.done = False #   done           : Flag raised when pathfinding has been completed.
         self.gcode = "" #     gcode          : String holding complete gcode for given character.
+        self.ripcord = -1 #   ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
         self.standardize()
-        self.snap()
+        self.snap(sensitivity)
 
     def pathfind(self):
+        start = time.time()
         self.nodify()
         self.dict = self.initDictionary() # Initialize dictionary data structure for pathfinding
         self.costs = [1000000] * len(self.nodes) # Initialize costs vector
-        minCost = 1000000 # Initializing minimum cost to be a huge number
+        self.minCost = 1000000 # Initializing minimum cost to be a huge number
         finalPath = []
-        for i in range(len(self.nodes)): # Iterate through possible starting nodes
-            self.xPrint(f'Iterating over {i}')
-            self.startPt = i
+        startPoints = self.findStart()
+        if len(startPoints) == 0:
+            startPoints = self.nodes
+        for i in range(len(startPoints)): # Iterate through possible starting nodes
+            self.xPrint(f'Iterating over {startPoints[i].id}')
+            self.startPt = startPoints[i].id
             temp = ""
-            # vEdges = temp.zfill(len(self.edges)) # Initialize string of 0s to keep track of visited nodes
             vEdges = [0] * len(self.edges)
             self.path = []
             self.minPath = []
-            self.dfs(vEdges[:],i,0) # Enter DFS function at starting node (Initial cost = 0, jump = -1)
-            self.xPrint(f'Cost of DFS at {i}: {self.costs[i]}')
-            if self.costs[i] < minCost: # Check if most recent iteration had the optimal cost
-                minCost = self.costs[i] # Set minimum cost to most recent cost
+            self.dfs(vEdges[:],startPoints[i].id,0) # Enter DFS function at starting node (Initial cost = 0, jump = -1)
+            self.xPrint(f'Cost of DFS at {startPoints[i].id}: {self.costs[self.startPt]}. Path was {self.minPath}')
+            if self.costs[self.startPt] < self.minCost: # Check if most recent iteration had the optimal cost
+                self.minCost = self.costs[i] # Set minimum cost to most recent cost
                 finalPath = self.minPath.copy() # Set optimal path to that of the most recent iteration
+            ideal = True
+            for step in finalPath:
+                if step[1] != -1:
+                    ideal = False
+            if ideal or (self.ripcord >= 0 and time.time() - start > self.ripcord):
+                if self.ripcord >= 0 and time.time() - start > self.ripcord:
+                    self.xPrint("Rip!")
+                break
         self.minPath = finalPath
         self.xPrint(f'Pathfinding complete! Final path is: {self.minPath}')
         self.deNodify()
@@ -141,14 +157,12 @@ class Pathfinder:
     # cost     : Holds the cost of the working path.
     def dfs(self,vEdges,nodeID,cost):
         if len(self.path) > 0: # If this is not the first node
-            if self.path[-1][1] == -1: # If the node has not been reached as the result of a jump
-                cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
-                vEdges[self.path[-1][0]] = 1 # Mark edge as visited
-            else: # If the node has been reached as the result of a jump
-                cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
+            if self.path[-1][1] != -1:
                 cost += abs(math.sqrt((self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).x-self.nodes[self.path[-1][1]].x)**2 + (self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).y-self.nodes[self.path[-1][1]].y)**2)) # Calculate and add the cost of the jump
-                vEdges[self.path[-1][0]] = 1 # Mark edge as visited
-        self.xPrint(f'DFS: Path: {self.path}, Cost: {cost}, vEdges: {vEdges}')
+                self.path[-1] = tuple((self.path[-1][0],self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).id)) # Replace jump value with jump destination for easier gcode generation | self.edges[self.path[-1][0]].otherNode(self.nodes[nodeID]).id
+            cost += self.edges[self.path[-1][0]].getWeight() # Calculate weight of the edge that was just traversed
+            vEdges[self.path[-1][0]] = 1 # Mark edge as visited
+        #self.xPrint(f'DFS: Path: {self.path}, CurrentNode: {nodeID}, Cost: {cost}, vEdges: {vEdges}')
         if 0 not in vEdges: # If all edges have been visited
             if cost < self.costs[self.startPt]: # If cost is less than last min
                 self.costs[self.startPt] = cost # Set cost as new min
@@ -159,18 +173,70 @@ class Pathfinder:
         for i in range(len(self.dict[nodeID])): # Check unvisited edges
             if vEdges[self.dict[nodeID][i].id] == 0: # If edge i is unvisited
                 self.path.append(tuple((self.dict[nodeID][i].id,-1))) # Add i to path
-                self.dfs(vEdges[:],self.dict[nodeID][i].otherNode(nodeID).id,cost) # Recurse on node opposite of nodeID over edge i
+                self.dfs(vEdges[:],self.dict[nodeID][i].otherNode(self.nodes[nodeID]).id,cost) # Recurse on node opposite of nodeID over edge i
                 validPath = 1 # Mark that a valid path was found
         if validPath == 0: # If all edges around nodeID were already visited
-            for i in range(len(self.edges)): # Search over all edges
-                if vEdges[i] == 0: # If edge i has not been visited
-                    self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
-                    self.dfs(vEdges[:],self.edges[i].nodes[0].id,cost) # Jump to and recurse over 1st node of unvisited edge
-                    self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
-                    self.dfs(vEdges[:],self.edges[i].nodes[1].id,cost) # Jump to and recurse over 2nd node of unvisited edge
+            idealNodes = []
+            priorGood = False # Flag marking whether an optimal jump point is found
+            for i in range(len(self.nodes)): # Search over all nodes
+                possEdges = 0 # Counter to count each unvisited edge attached to node i
+                for j in range(len(self.dict[i])): # Search over all edges attached to node i
+                    if vEdges[self.dict[i][j].id] == 0: # If this edge has not been visited
+                        possEdges += 1 # Increment counter
+                if possEdges == 1: # If there is only one unvisited edge from node i
+                    priorGood = True # Mark that an optimal jump point has been found
+                    idealNodes.append(i)
+            if len(idealNodes) <= 3:
+                for i in range(len(idealNodes)):
+                    for j in range(len(self.dict[idealNodes[i]])): # Search through all attached edges to node i
+                        if vEdges[self.dict[idealNodes[i]][j].id] == 0: # If edge is unvisited
+                            #print(f'Jump to {i}')
+                            if self.edges[self.dict[idealNodes[i]][j].id].nodes[0].id != i:
+                                self.path.append(tuple((self.edges[self.dict[idealNodes[i]][j].id].id,nodeID))) # Add unvisited edge to path
+                                if self.dfs(vEdges[:],self.edges[self.dict[idealNodes[i]][j].id].nodes[0].id,cost): # Jump to and recurse over target node of unvisited edge
+                                    break
+                            else:
+                                self.path.append(tuple((self.edges[self.dict[idealNodes[i]][j].id].id,nodeID))) # Add unvisited edge to path
+                                if self.dfs(vEdges[:],self.edges[self.dict[idealNodes[i]][j].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
+                                    break
+            else:
+                ideal = self.shortestJump(nodeID,idealNodes)
+                for i in range(len(self.dict[ideal])): # Search through all attached edges to node i
+                    if vEdges[self.dict[ideal][i].id] == 0: # If edge is unvisited
+                        #print(f'Jump to {i}')
+                        if self.edges[self.dict[ideal][i].id].nodes[0].id != ideal:
+                            self.path.append(tuple((self.edges[self.dict[ideal][i].id].id,nodeID))) # Add unvisited edge to path
+                            if self.dfs(vEdges[:],self.edges[self.dict[ideal][i].id].nodes[0].id,cost): # Jump to and recurse over target node of unvisited edge
+                                break
+                        else:
+                            self.path.append(tuple((self.edges[self.dict[ideal][i].id].id,nodeID))) # Add unvisited edge to path
+                            if self.dfs(vEdges[:],self.edges[self.dict[ideal][i].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
+                                break
+            if not priorGood: # If no optimal jump point is found
+                for i in range(len(self.edges)): # Search over all edges
+                    if vEdges[i] == 0: # If edge i has not been visited
+                        #print(f'NonPriority Jump to {self.edges[i].nodes[0].id}')
+                        self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
+                        self.dfs(vEdges[:],self.edges[i].nodes[0].id,cost) # Jump to and recurse over 1st node of unvisited edge
+                        #print(f'NonPriority Jump to {self.edges[i].nodes[1].id}')
+                        self.path.append(tuple((self.edges[i].id,nodeID))) # Add unvisited edge to path
+                        self.dfs(vEdges[:],self.edges[i].nodes[1].id,cost) # Jump to and recurse over 2nd node of unvisited edge
         if len(self.path) > 0: # If this is not the first node
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
+
+    def shortestJump(self,source,dests):
+        minDist = 1000000
+        ideal = -1
+        for i in range(len(dests)):
+            dist = abs(math.sqrt((self.nodes[dests[i]].x-self.nodes[source].x)**2 + (self.nodes[dests[i]].y-self.nodes[source].y)**2))
+            if dist < minDist:
+                minDist = dist
+                ideal = dests[i]
+        return ideal
+
+    def setRipcord(self,rip=5):
+        self.ripcord = rip
 
     def snap(self,sensitivity=.005):
         for i in range(len(self.segments)):
@@ -237,54 +303,34 @@ class Pathfinder:
             line.center = tuple(editLineC)
 
     # Converts edges in the optimized order into gcode
-    def convert(self,spacer):
+    def convert(self,spacer,lines=""):
         self.gcode = ""
+        if lines == "":
+            lines = self.segments
         curLine = ""
         lastPoint = (0,0)
         start = spacer.plot(lastPoint)
-        self.gcode += "G01 X" + str(start[0]) + " Y" + str(start[1]) + " Z0\n"
-        for line in self.segments:
+        for line in lines:
             curLine = ""
             if line.checkPickup(lastPoint):
-                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
+                if lastPoint != (0,0):
+                    curLine += "G01X" + str(spacer.plot(lastPoint)[0]) + "Y" + str(spacer.plot(lastPoint)[1]) + "Z0\n"
+                curLine += "G01X" + str(spacer.plot(line.start)[0]) + "Y" + str(spacer.plot(line.start)[1]) + "Z0\n"
+                curLine += "G01X" + str(spacer.plot(line.start)[0]) + "Y" + str(spacer.plot(line.start)[1]) + "Z1\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
-                curLine += "G01 "
+                curLine += "G01"
             else:
                 if line.checkDirection():
-                    curLine += "G02 "
+                    curLine += "G02"
                 else:
-                    curLine += "G03 "
-            curLine += "X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z1"
+                    curLine += "G03"
+            curLine += "X" + str(spacer.plot(line.end)[0]) + "Y" + str(spacer.plot(line.end)[1]) + "Z1"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
-                curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
-            self.gcode += curLine + "\n"
-
-    # Variant of convert function that keeps the Z value set to 0 for debugging purposes.
-    def convertConstZ(self,spacer):
-        self.gcode = ""
-        curLine = ""
-        lastPoint = (0,0)
-        start = spacer.plot(lastPoint)
-        self.gcode += "G01 X" + str(start[0]) + " Y" + str(start[1]) + " Z0\n"
-        for line in self.segments:
-            curLine = ""
-            if line.checkPickup(lastPoint):
-                curLine += "G01 X" + str(spacer.plot(line.start)[0]) + " Y" + str(spacer.plot(line.start)[1]) + " Z0\n"
-                lastPoint = line.end
-            if line.center[0] == -1 and line.center[1] == -1:
-                curLine += "G01 "
-            else:
-                if line.checkDirection():
-                    curLine += "G02 "
-                else:
-                    curLine += "G03 "
-            curLine += "X" + str(spacer.plot(line.end)[0]) + " Y" + str(spacer.plot(line.end)[1]) + " Z0"
-            lastPoint = line.end
-            if line.center[0] != -1 and line.center[1] != -1:
-                curLine += " I" + str(line.getRelativeOf(line.center)[0]) + " J" + str(line.getRelativeOf(line.center)[1])
-            self.gcode += curLine + "\n"
+                curLine += "I" + str(line.getRelativeOf(line.center)[0]) + "J" + str(line.getRelativeOf(line.center)[1])
+            self.gcode += curLine + "\nF100"
+        self.gcode += "G01X" + str(spacer.plot(line.end)[0]) + "Y" + str(spacer.plot(line.end)[1]) + "Z0" + "F100\n"
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
@@ -324,27 +370,41 @@ class Pathfinder:
             for edge in self.edges:
                 if edge.hasNode(i):
                     dict[i].append(edge)
-        self.xPrint(f'Dictionary initialized! Contains:')
-        for i in range(len(dict)):
-            self.xPrint(f'{i} - ')
-            for j in range(len(dict[i])):
-                self.xPrint(f' {dict[i][j].id}')
         return dict
+
+    def findStart(self):
+        instances = {}
+        startPoints = []
+        for edge in self.edges:
+            for node in edge.nodes:
+                if node.id in instances:
+                    instances[node.id] += 1
+                else:
+                    instances[node.id] = 1
+        for i in range(len(instances)):
+            if instances[i] < 2:
+                startPoints.append(self.nodes[i])
+        self.xPrint(instances)
+        return startPoints
 
     def deNodify(self):
         self.xPrint("Convert Nodes and Edges to Lines")
-        newLines = [-1] * len(self.segments)
-        for i in range(len(newLines)):
-            newLines[i] = self.segments[self.minPath[i][0]]
-        if newLines[0].start == newLines[1].start or newLines[0].start == newLines[1].end:
-            newLines[0].flip()
-        for i in range(len(newLines)-1):
-            if newLines[i].end != newLines[i+1].start:
-                if self.minPath[i+1][1] == -1:
-                    newLines[i+1].flip()
-                elif newLines[i+1].start[0] != self.nodes[self.minPath[i+1][1]].x or newLines[i+1].start[1] != self.nodes[self.minPath[i+1][1]].y:
-                    newLines[i+1].flip()
-        self.segments = newLines
+        orderedLines = [-1] * len(self.segments)
+        jump = False
+        for i in range(len(orderedLines)):
+            orderedLines[i] = self.segments[self.minPath[i][0]]
+        if orderedLines[0].start == orderedLines[1].start or orderedLines[0].start == orderedLines[1].end:
+            orderedLines[0].flip()
+        for i in range(len(orderedLines)-1):
+            self.xPrint(f'{self.edges[self.minPath[i][0]].nodes[0].id} - {self.minPath[i][0]} - {self.edges[self.minPath[i][0]].nodes[1].id} (FROM {self.minPath[i][1]}), {self.edges[self.minPath[i+1][0]].nodes[0].id} - {self.minPath[i+1][0]} - {self.edges[self.minPath[i+1][0]].nodes[1].id} (FROM {self.minPath[i+1][1]})')
+            #self.xPrint(f'orderedLines[i+1].end: {orderedLines[i+1].end} , self.nodes[self.minPath[i+1][1]].coords(): {self.nodes[self.minPath[i+1][1]].coords()}')
+            if self.minPath[i+1][1] == -1 and orderedLines[i].end != orderedLines[i+1].start:
+                self.xPrint("Flip A")
+                orderedLines[i+1].flip()
+            elif self.minPath[i+1][1] != -1 and orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords(): #  and orderedLines[i].end == orderedLines[i+1].end
+                self.xPrint("Flip B")
+                orderedLines[i+1].flip()
+        self.segments = orderedLines
 
     def checkDone(self):
         return self.done

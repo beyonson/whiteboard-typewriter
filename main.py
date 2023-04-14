@@ -1,89 +1,170 @@
 from threading import Thread
 from queue import Queue
+import sys
 import serial
-from pathfinding import *
-from character_segmentation import *
+import time
+sys.path.insert(0, './character_segmentation')
+from segmentation import get_image, find_lines, find_arcs, find_circles, circle_processing, remove_overlap_lines, remove_intersections, find_lind_idx
 from CharacterCache import *
+sys.path.insert(0, './pathfinding')
+from pathfinding import *
+from SpaceCadet import *
+import math
 
-charPreProcThread = Thread(target=charPreProcProcess, args(1,))
-segmentationThread = Thread(target=segmentationProcess, args(2,))
-pathfindingThread = Thread(target=pathfindingProcess, args(3,))
-serialThread = Thread(target=serialProcess, args(4,))
+charCache = CharacterCache(26)
 
-segmentationQueue = queue.Queue()
-pathfindingQueue = queue.Queue()
-serialQueue = queue.Queue()
-cacheQueue = queue.Queue()
-serialToMotor = serial.Serial('COM3')
 
-charPreProcThread.start()
-segmentationThread.start()
-pathfindingThread.start()
-serialThread.start()
+def segmentationProcess(tgt):
 
-###################################################
-##      THREAD 1 : CHARACTER PREPROCESSING       ##
+    # run segmentation on current file path
+    print(tgt[0])
 
-def charPreProcProcess():
-#   When letter recieved:
-#       Check if letter is in character cache
-#       Do skeletonization
-#       Add output to segmentation queue
+    if tgt[1] == '^': # Placeholder character representing a reset
+        pack = PathfindingPackage("",str(tgt[1]),"Font","Reset")
+        return pack
+    if tgt[1] == '>': # Placeholder character representing a new line
+        pack = PathfindingPackage("",str(tgt[1]),"Font","Return")
+        return pack
+    if tgt[1] == '_':
+        pack = PathfindingPackage("",str(tgt[1]),"Font","Space")
+        return pack
+    out = charCache.poll(tgt[1]) # Out is the collection of segments, not gcode, because the spacer still needs to determine where the letter will be drawn
+    if out != "":
+        pack = PathfindingPackage(out,str(tgt[1]),"Font","Cached")
+        return pack
 
-###################################################
-##      THREAD 2 : CHARACTER SEGMENTATION        ##
+    img = get_image(tgt[0])
 
-def segmentationProcess():
-    while True:
-        while not segmentationQueue.empty():
-            img = segmentationQueue.get()
-            line_segments = find_lines(img)
-            # centers, radii, votes = find_circles(img, range(20,100,5), 0.6, 20)
-            # good_circles = np.logical_and(votes > 0.6 * np.max(votes), votes > np.array([60])[0])
-            # centers = centers[np.squeeze(good_circles)]
-            # radii = radii[good_circles]
-            # votes = np.take(votes, np.where(good_circles))[0]
-            # arc_list = find_arcs(centers, radii, votes, img)
+    path_finding_lines = []
 
-            segment_list = []
-            # Line(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
-            for line in line_segments:
-                x1, y1 = line[0]
-                x2, y2 = line[1]
-                segment_list.append(Line(x1,y1,x2,y2,-1,-1,0))
+    line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=12, minLineLength=1, maxLineGap=10)
+    # line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=13, minLineLength=1, maxLineGap=10)
 
-            # for arc in arc_list:
-            #     cx, cy, r, start_angle, end_angle, start_idx, end_idx = arc
-            #     segment_list.append(Line(x1,y1,x2,y2,-1,-1,0))
 
-            pathfindingQueue.put(segment_list)
-#           Take next letter from segmentation queue
-#           Perform character segmentation
-#           Add output list of lines to pathfinding queue
+    line_segments = remove_intersections(line_segments)
 
-###################################################
-##      THREAD 3 : PATHFINDING                   ##
+    # line_idx = find_lind_idx(line_segments)
 
-def pathfindingProcess():
-    spacer = SpaceCadet(1)
-    while True:
-        while not pathfindingQueue.empty():
-            lines = pathfindingQueue.get()
-            if lines == "Dummy":
-                lines == cacheQueue.get()
-            pathfinder = Pathfinder(lines)
-            pathfinder.pathfind()
-            pathfinder.convert(spacer)
-            serialQueue.put(pathfinder.getGCode())
-            spacer.step()
+    # centers, radii, votes = find_circles(img, range(20,500,5), 0.70, 30, line_idx)
 
-###################################################
-##      THREAD 4 : SERIAL                        ##
+    # centers, radii, votes = circle_processing(centers, radii, votes, 0.7, 10)
 
-def serialProcess():
-    while True:
-        while not serialQueue.empty():
-            gcode = serialQueue.get()
-            for line in gcode.splitLines():
-                serialToMotor.write(str.encode(line))
-                ack = serialToMotor.readline()
+    arc_list = []
+    # arc_list = find_arcs(centers, radii, votes, img)
+
+    # line_segments = remove_overlap_lines(line_segments, arc_list, 0.25, 2)
+
+    print("Finished segments")
+
+    for i in range(len(line_segments)):
+        # class Line:
+        # def __init__(self,startX,startY,endX,endY,centerX=-1,centerY=-1,arc=0):
+        path_finding_lines.append(Line(line_segments[i][0][0], line_segments[i][0][1], line_segments[i][1][0], line_segments[i][1][1]))
+
+    for i in range(len(arc_list)):
+        if (arc_list[i][3] - arc_list[i][2]) < 180:
+            path_finding_lines.append(Line(arc_list[i][4][0], arc_list[i][4][1], arc_list[i][5][0], arc_list[i][5][1], arc_list[i][0][0], arc_list[i][0][1],(arc_list[i][3]-arc_list[i][2])))
+        else:
+            path_finding_lines.append(Line(arc_list[i][4][1], arc_list[i][4][0], arc_list[i][5][1], arc_list[i][5][0], arc_list[i][0][0], arc_list[i][0][1],(arc_list[i][2]-arc_list[i][3])))
+
+
+
+    pack = PathfindingPackage(path_finding_lines,str(tgt[1]),"Font")
+
+    return pack
+
+
+def pathfindingProcess(pack,spacer):
+    lines = pack.lines
+    print(f'Lines: {len(lines)}')
+    pathfinder = Pathfinder(lines,.025)
+    if pack.type == "Cached":
+        gcode = pathfinder.convert(spacer)
+        spacer.step()
+        return pathfinder.getGCode()
+    elif pack.type == "Reset":
+        spacer.reset()
+        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
+    elif pack.type == "Return":
+        spacer.nextLine()
+        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
+    elif pack.type == "Space":
+        spacer.step()
+        return "G01 X" + str(spacer.plot((0,0))[0]) + " Y" + str(spacer.plot((0,0))[1]) + " Z0\n"
+    pathfinder.setVerbosity(False)
+    pathfinder.setRipcord(5)
+    pathfinder.pathfind()
+    pathfinder.convert(spacer)
+    gcode = pathfinder.getGCode()
+    spacer.step()
+    charCache.add(pack.letter,pathfinder.segments)
+
+    return gcode
+
+def serialProcess(gcode, serialToMotor):
+    start = time.time()
+    for line in gcode.splitlines():
+        line = line.strip()
+        print(f'Sending: {line}')
+        serialToMotor.write(str.encode(line + '\n'))
+        ack = serialToMotor.readline()
+        print(f' : {ack.strip()}')
+    return time.time() - start
+
+def serialInit(serialToMotor):
+    f = open('config.gcode','r');
+    print("IN")
+    serialToMotor = serial.Serial('COM3') # /dev/ttyACM0
+    serialToMotor.write(str.encode("\r\n\r\n"))
+    time.sleep(2)   # Wait for grbl to initialize
+    serialToMotor.flushInput()  # Flush startup text in serial input
+    for line in f:
+        l = line.strip() # Strip all EOL characters for streaming
+        print(f'Sending: {l}')
+        serialToMotor.write(str.encode(l + '\n')) # Send g-code block to grbl
+        grbl_out = serialToMotor.readline() # Wait for grbl response with carriage return
+        print(f' : {grbl_out.strip()}')
+
+if __name__ == "__main__":
+
+    currentText = ""
+    textfile = open("typedText.txt", "r+")
+    spacer = SpaceCadet(3)
+
+    if (len(sys.argv) > 2):
+        print("ERROR: too many args")
+        exit
+    elif (len(sys.argv) == 2):
+        serialFlag = True
+    else:
+        serialFlag = False
+
+    serialToMotor = ''
+    if serialFlag:
+        serialInit(serialToMotor)
+
+    # check to see if text has changed
+    while(True):
+        updatedText = textfile.readline()
+        if (updatedText != currentText):
+            # if text is changed, send to yasser and update
+            for i in range(len(currentText), len(updatedText)-1):
+                asciiNum = ord(updatedText[i])
+                # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
+                filename = "character_segmentation/prototyping/chars/myfile" + str(asciiNum) + ".bmp"
+                segInfo = [filename, chr(asciiNum)]
+
+                startSeg = time.time()
+                print(updatedText[i])
+                lines = segmentationProcess(segInfo)
+                endSeg = time.time()
+                gcode = pathfindingProcess(lines,spacer)
+                print(f'Time elapsed - Segmentation: {endSeg-startSeg}, Pathfinding: {time.time()-endSeg}')
+                print(gcode)
+                gantryTime = "N/A"
+                if serialFlag:
+                    gantryTime = serialProcess(gcode, serialToMotor)
+                print(f'Time elapsed for gantry: {gantryTime}')
+                print('\n')
+
+            currentText = updatedText

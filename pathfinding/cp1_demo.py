@@ -1,6 +1,12 @@
 from pathfinding import *
+import serial
+import time
 
 cadet = SpaceCadet(1)
+#serialToMotor = serial.Serial('COM3')
+#serialToMotor.write(str.encode("\r\n\r\n"))
+#time.sleep(2)   # Wait for grbl to initialize
+#serialToMotor.flushInput()  # Flush startup text in serial input
 
 # STRAIGHT LINE TEST: Draw a box
 lines = []
@@ -19,6 +25,12 @@ if pathfinder.checkDone():
 
 print("Drawing box:")
 print(gcode)
+#for line in gcode.splitlines():
+#    line = line.strip()
+#    print(f'Sending: {line}')
+#    serialToMotor.write(str.encode(line + '\n'))
+#    ack = serialToMotor.readline()
+#    print(f' : {ack.strip()}')
 cadet.step()
 
 ################################################################
@@ -33,11 +45,22 @@ lines.append(Line(.5,.4,.4,.3,.4,.4,90)) # 3
 lines.append(Line(.3,.4,.4,.5,.4,.4,90)) # 1
 lines.append(Line(.4,.5,.5,.4,.4,.4,90)) # 2
 lines.append(Line(.4,.3,.3,.4,.4,.4,90)) # 4
+lines.append(Line(.7,.6,.6,.5,.6,.6,90)) # 3
+lines.append(Line(.5,.6,.6,.7,.6,.6,90)) # 1
+lines.append(Line(.6,.7,.7,.6,.6,.6,90)) # 2
+lines.append(Line(.6,.5,.5,.6,.6,.6,90)) # 4
+lines.append(Line(.9,.8,.8,.7,.8,.8,90)) # 3
+lines.append(Line(.7,.8,.8,.9,.8,.8,90)) # 1
+lines.append(Line(.8,.9,.9,.8,.8,.8,90)) # 2
+lines.append(Line(.8,.7,.7,.8,.8,.8,90)) # 4
 
 pathfinder = Pathfinder(lines)
 pathfinder.setVerbosity(False)
 gcode = ""
+start = time.time()
 pathfinder.pathfind()
+end = time.time()
+print(f'Circle test took {end-start}s')
 if pathfinder.checkDone():
     pathfinder.convert(cadet)
     gcode = pathfinder.getGCode()
@@ -132,3 +155,46 @@ if pathfinder.checkDone():
 print("Drawing the letter L:")
 print(gcode)
 cadet.step()
+
+###############################################################
+# COMPLICATED LETTER TEST: Drawing B
+
+lines = []
+lines.append(Line(205, 187, 162, 222, 156, 166, 60))
+lines.append(Line(59, 361, 59, 111))
+lines.append(Line(61, 363, 153, 363))
+lines.append(Line(60, 230, 156, 230))
+lines.append(Line(62, 109, 134, 109))
+lines.append(Line(204, 190, 208, 171))
+lines.append(Line(210, 329, 216, 302))
+lines.append(Line(206, 144, 209, 165))
+lines.append(Line(151, 110, 176, 115))
+lines.append(Line(212, 272, 216, 298))
+lines.append(Line(177, 116, 194, 125))
+lines.append(Line(178, 358, 197, 347))
+lines.append(Line(195, 250, 207, 262))
+lines.append(Line(192, 351, 206, 336))
+lines.append(Line(161, 236, 191, 247))
+lines.append(Line(135, 110, 150, 110))
+lines.append(Line(158, 362, 176, 358))
+lines.append(Line(190, 210, 200, 199))
+lines.append(Line(196, 127, 205, 142))
+lines.append(Line(164, 220, 183, 214))
+lines.append(Line(203, 192, 208, 166))
+lines.append(Line(202, 256, 212, 274))
+lines.append(Line(200, 343, 209, 331))
+
+#pathfinder = Pathfinder(lines)
+#pathfinder.setVerbosity(False)
+#gcode = ""
+#start = time.time()
+#pathfinder.pathfind()
+#end = time.time()
+#print(f'Circle test took {end-start}s')
+#if pathfinder.checkDone():
+#    pathfinder.convert(cadet)
+#    gcode = pathfinder.getGCode()
+
+#print("Drawing the letter B:")
+#print(gcode)
+#cadet.step()
