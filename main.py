@@ -148,7 +148,7 @@ if __name__ == "__main__":
         updatedText = textfile.readline()
         if (updatedText != currentText):
             # if text is changed, send to yasser and update
-            for i in range(len(currentText), len(updatedText)-1):
+            for i in range(len(currentText), len(updatedText)):
                 asciiNum = ord(updatedText[i])
                 # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
                 filename = "character_segmentation/prototyping/chars/myfile" + str(asciiNum) + ".bmp"
