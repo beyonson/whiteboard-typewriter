@@ -1,5 +1,5 @@
 class SpaceCadet:
-    xMax = 15 # 60
+    xMax = 14 # 60
     yMax = 10 # 40
     def __init__(self,size):
         self.size = size

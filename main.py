@@ -78,6 +78,7 @@ def pathfindingProcess(pack,spacer):
     lines = pack.lines
     print(f'Lines: {len(lines)}')
     pathfinder = Pathfinder(lines,.025)
+    pathfinder.setSpeed(100)
     if pack.type == "Cached":
         gcode = pathfinder.convert(spacer)
         spacer.step()
@@ -154,7 +155,7 @@ if __name__ == "__main__":
         except:
             serialToMotor = serial.Serial('/dev/ttyACM1', 115200) # /dev/ttyACM0
         # serialInit(serialToMotor)
-        
+
         serialToMotor.write(str.encode("\r\n\r\n"))
         time.sleep(2)   # Wait for grbl to initialize
         serialToMotor.flushInput()  # Flush startup text in serial input

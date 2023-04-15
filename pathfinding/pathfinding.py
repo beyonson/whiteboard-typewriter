@@ -115,6 +115,7 @@ class Pathfinder:
         self.gcode = "" #      gcode          : String holding complete gcode for given character.
         self.ripcord = -1 #    ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
         self.currentCode = -1 #currentCode    : Integer holding the current gcode command in place
+        self.speed = 100 #   speed          : Integer holding the feed rate printed in gcode
         self.standardize()
         self.snap(sensitivity)
 
@@ -239,6 +240,10 @@ class Pathfinder:
     def setRipcord(self,rip=5):
         self.ripcord = rip
 
+    def setSpeed(self,speed):
+        self.speed = speed
+        print(self.speed)
+
     def snap(self,sensitivity=.005):
         for i in range(len(self.segments)):
             for j in range(i+1,len(self.segments)):
@@ -312,12 +317,12 @@ class Pathfinder:
         curLine = ""
         lastPoint = (0,0)
         start = spacer.plot(lastPoint)
-        self.gcode += "G01 X-" + str(spacer.plot(lastPoint)[0]) + " Y-" + str(spacer.plot(lastPoint)[1]) + " Z0 F100 (Here)\n"
+        self.gcode += "G01 X-" + str(spacer.plot(lastPoint)[0]) + " Y-" + str(spacer.plot(lastPoint)[1]) + " Z0 F" + str(self.speed) + " (Here)\n"
         for line in lines:
             curLine = ""
             if line.checkPickup(lastPoint):
-                curLine += "G01 X-" + str(spacer.plot(line.start)[0]) + " Y-" + str(spacer.plot(line.start)[1]) + " Z0 F100\n"
-                curLine += "G01 Z1 F100\n"
+                curLine += "G01 X-" + str(spacer.plot(line.start)[0]) + " Y-" + str(spacer.plot(line.start)[1]) + " Z0 F" + str(self.speed) + "\n"
+                curLine += "G01 Z1 F" + str(self.speed) + "\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
@@ -330,8 +335,8 @@ class Pathfinder:
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I-" + str(line.getRelativeOf(line.center)[0]) + " J-" + str(line.getRelativeOf(line.center)[1])
-            self.gcode += curLine + " F100\n"
-        self.gcode += "G01 X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z0 F100\n"
+            self.gcode += curLine + " F" + str(self.speed) + "\n"
+        self.gcode += "G01 X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z0 F" + str(self.speed) + "\n"
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
