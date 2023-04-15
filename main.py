@@ -37,7 +37,7 @@ def segmentationProcess(tgt):
 
     path_finding_lines = []
 
-    line_segments = find_lines(img, rho=1, theta=(math.pi/180)/2, threshold=12, minLineLength=1, maxLineGap=25)
+    line_segments = find_lines(img, rho=1, theta=(math.pi/180)/2, threshold=12, minLineLength=1, maxLineGap=10)
     # line_segments = find_lines(img, rho=1, theta=math.pi/180, threshold=13, minLineLength=1, maxLineGap=10)
 
 
