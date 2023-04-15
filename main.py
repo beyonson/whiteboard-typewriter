@@ -84,13 +84,13 @@ def pathfindingProcess(pack,spacer):
         return pathfinder.getGCode()
     elif pack.type == "Reset":
         spacer.reset()
-        return "G01 X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
+        return "G01X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     elif pack.type == "Return":
         spacer.nextLine()
-        return "G01 X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
+        return "G01X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     elif pack.type == "Space":
         spacer.step()
-        return "G01 X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
+        return "G01X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     pathfinder.setVerbosity(False)
     pathfinder.setRipcord(5)
     pathfinder.pathfind()
@@ -108,11 +108,19 @@ def serialProcess(gcode, serialToMotor):
         print(f'Sending: {line}')
         serialToMotor.write(str.encode(line + '\n'))
         ack = serialToMotor.readline()
+        print(ack)
+
+        while ack != b'ok\r\n':
+            print("OOOOOOOOOOOOOOOPPPPPPPPPPPPPPSSSSSSSSSSSSSSS")
+            print(f'Sending: {line}')
+            serialToMotor.write(str.encode(line + '\n'))
+            ack = serialToMotor.readline()
+
         print(f' : {ack.strip()}')
     return time.time() - start
 
 def serialInit(serialToMotor):
-    f = open('config.gcode','r');
+    f = open('gcode/config.gcode','r');
     print("IN")
     serialToMotor.write(str.encode("\r\n\r\n"))
     time.sleep(2)   # Wait for grbl to initialize
@@ -140,15 +148,23 @@ if __name__ == "__main__":
 
     serialToMotor = ''
     if serialFlag:
-        serialToMotor = serial.Serial('COM3', 9600) # /dev/ttyACM0
-        serialInit(serialToMotor)
+        serialToMotor = serial.Serial('/dev/ttyACM0', 115200) # /dev/ttyACM0
+        # serialInit(serialToMotor)
+        
+        serialToMotor.write(str.encode("\r\n\r\n"))
+        time.sleep(2)   # Wait for grbl to initialize
+        serialToMotor.flushInput()  # Flush startup text in serial input
+
+        serialToMotor.write(str.encode("$H" + '\n'))
 
     # check to see if text has changed
     while(True):
+        textfile.seek(0)
         updatedText = textfile.readline()
-        if (updatedText != currentText):
+        updatedText = updatedText.strip()
+        if (updatedText != currentText and len(updatedText) > len(currentText)):
             # if text is changed, send to yasser and update
-            for i in range(len(currentText), len(updatedText)-1):
+            for i in range(len(currentText), len(updatedText)):
                 asciiNum = ord(updatedText[i])
                 # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
                 filename = "character_segmentation/prototyping/chars/myfile" + str(asciiNum) + ".bmp"
