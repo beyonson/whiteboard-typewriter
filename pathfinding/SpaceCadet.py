@@ -12,8 +12,8 @@ class SpaceCadet:
         #y = coord[1] #+ self.y
         return (x,y)
     def step(self):
-        self.x += self.size
-        if self.x + self.size > SpaceCadet.xMax:
+        self.x += (self.size*.6)
+        if self.x + (self.size*.6) > SpaceCadet.xMax:
             self.x = 0
             self.y += self.size
             if self.y > SpaceCadet.yMax:
