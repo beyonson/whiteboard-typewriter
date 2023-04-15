@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     currentText = ""
     textfile = open("typedText.txt", "r+")
-    textfile.truncate(0)
+    #textfile.truncate(0)
     spacer = SpaceCadet(2.5)
 
     if (len(sys.argv) > 2):
@@ -149,7 +149,10 @@ if __name__ == "__main__":
 
     serialToMotor = ''
     if serialFlag:
-        serialToMotor = serial.Serial('/dev/ttyACM0', 115200) # /dev/ttyACM0
+        try:
+            serialToMotor = serial.Serial('/dev/ttyACM0', 115200) # /dev/ttyACM0
+        except:
+            serialToMotor = serial.Serial('/dev/ttyACM1', 115200) # /dev/ttyACM0
         # serialInit(serialToMotor)
         
         serialToMotor.write(str.encode("\r\n\r\n"))
