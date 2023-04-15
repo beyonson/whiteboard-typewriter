@@ -30,5 +30,3 @@ $130 = 200.000    (x max travel, mm)
 $122 = 10.000    (z accel, mm/sec^2)
 $131 = 200.000    (y max travel, mm)
 $132 = 200.000    (z max travel, mm)
-
-$H

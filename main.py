@@ -149,7 +149,13 @@ if __name__ == "__main__":
     serialToMotor = ''
     if serialFlag:
         serialToMotor = serial.Serial('/dev/ttyACM0', 115200) # /dev/ttyACM0
-        serialInit(serialToMotor)
+        # serialInit(serialToMotor)
+        
+        serialToMotor.write(str.encode("\r\n\r\n"))
+        time.sleep(2)   # Wait for grbl to initialize
+        serialToMotor.flushInput()  # Flush startup text in serial input
+
+        serialToMotor.write(str.encode("$H" + '\n'))
 
     # check to see if text has changed
     while(True):
