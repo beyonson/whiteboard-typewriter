@@ -136,6 +136,7 @@ if __name__ == "__main__":
 
     currentText = ""
     textfile = open("typedText.txt", "r+")
+    textfile.truncate(0)
     spacer = SpaceCadet(2.5)
 
     if (len(sys.argv) > 2):
