@@ -312,12 +312,11 @@ class Pathfinder:
         curLine = ""
         lastPoint = (0,0)
         start = spacer.plot(lastPoint)
+        self.gcode += "G01 X-" + str(spacer.plot(lastPoint)[0]) + " Y-" + str(spacer.plot(lastPoint)[1]) + " Z0 F100 (Here)\n"
         for line in lines:
             curLine = ""
             if line.checkPickup(lastPoint):
-                if lastPoint != (0,0):
-                    curLine += "G01 Z0 F100\n"
-                curLine += "G01 X-" + str(spacer.plot(line.start)[0]) + " Y-" + str(spacer.plot(line.start)[1]) + " Z0 F500\n"
+                curLine += "G01 X-" + str(spacer.plot(line.start)[0]) + " Y-" + str(spacer.plot(line.start)[1]) + " Z0 F100\n"
                 curLine += "G01 Z1 F100\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
@@ -331,8 +330,8 @@ class Pathfinder:
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I-" + str(line.getRelativeOf(line.center)[0]) + " J-" + str(line.getRelativeOf(line.center)[1])
-            self.gcode += curLine + "\n"
-        self.gcode += "G01 X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z0" + "\n"
+            self.gcode += curLine + " F100\n"
+        self.gcode += "G01 X-" + str(spacer.plot(line.end)[0]) + " Y-" + str(spacer.plot(line.end)[1]) + " Z0 F100\n"
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
