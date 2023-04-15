@@ -1,5 +1,1 @@
-<<<<<<< HEAD
 SENIOR_DESIGN>HELLO_WORLD
-=======
-A
->>>>>>> 73cb302d59c913983744cf060cd1d2daf8015fa5
