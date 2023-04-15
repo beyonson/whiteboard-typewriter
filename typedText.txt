@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 BIJUPLKIPL
+=======
+ABCDEF
+>>>>>>> 5664cd080a0e53b3197fb4e3edd57973a1f24285
