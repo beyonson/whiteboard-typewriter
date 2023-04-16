@@ -10,6 +10,8 @@ sys.path.insert(0, './pathfinding')
 from pathfinding import *
 from SpaceCadet import *
 import math
+from datetime import datetime
+import matplotlib.pyplot as plt
 
 charCache = CharacterCache(26)
 
@@ -157,6 +159,10 @@ if __name__ == "__main__":
 
         serialToMotor.write(str.encode("$H" + '\n'))
 
+
+    line_arc_optimized = []
+    path_finding = []
+
     # check to see if text has changed
     while(True):
         textfile.seek(0)
@@ -172,9 +178,18 @@ if __name__ == "__main__":
 
                 startSeg = time.time()
                 print(updatedText[i])
+
+                tic = datetime.now()
                 lines = segmentationProcess(segInfo)
+                toc = datetime.now()
+                line_arc_optimized.append((toc - tic).seconds)
+
                 endSeg = time.time()
+                tic = datetime.now()
                 gcode = pathfindingProcess(lines,spacer)
+                toc = datetime.now()
+                path_finding.append((toc - tic).seconds)
+
                 print(f'Time elapsed - Segmentation: {endSeg-startSeg}, Pathfinding: {time.time()-endSeg}')
                 print(gcode)
                 gantryTime = "N/A"
@@ -184,3 +199,11 @@ if __name__ == "__main__":
                 print('\n')
 
             currentText = updatedText
+
+            break
+
+    groups = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+    fig, ax = plt.subplots()
+    ax.bar(groups, line_arc_optimized)
+    ax.bar(groups, path_finding, bottom = line_arc_optimized)
+    plt.show()
