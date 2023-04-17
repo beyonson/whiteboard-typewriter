@@ -5,6 +5,7 @@ class SpaceCadet:
         self.size = size
         self.x = 0
         self.y = 0
+        self.slowdown = False
     def plot(self,coord):
         x = (coord[0] * self.size) + self.x
         #x = coord[0] #+ self.x
@@ -15,10 +16,13 @@ class SpaceCadet:
         self.x += (self.size*.6)
         if self.x + (self.size*.6) > SpaceCadet.xMax:
             self.nextLine()
+        else:
+            self.slowdown = False
     def reset(self):
         self.x = 0
         self.y = 0
     def nextLine(self):
+        self.slowdown = True
         self.x = 0
         self.y += self.size
         if self.y > SpaceCadet.yMax:

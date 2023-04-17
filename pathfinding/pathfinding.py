@@ -330,7 +330,12 @@ class Pathfinder:
         curLine = ""
         lastPoint = (0,0)
         start = spacer.plot(lastPoint)
-        self.gcode += "G01 X-" + str(round(spacer.plot(lastPoint)[0],4)) + " Y-" + str(round(spacer.plot(lastPoint)[1],4)) + " Z0 F" + str(self.speed/2.5) + "\n"
+        self.gcode += "G01 X-" + str(round(spacer.plot(lastPoint)[0],4)) + " Y-" + str(round(spacer.plot(lastPoint)[1],4)) + " Z0 "
+        if spacer.slowdown:
+            self.gcode += "F100\n"
+            spacer.slowdown = False
+        else:
+            self.gcode += "F" + str(self.speed/2.5) + "\n"
         for line in lines:
             curLine = ""
             if line.checkPickup(lastPoint):
