@@ -202,18 +202,19 @@ class Pathfinder:
                                 if self.dfs(vEdges[:],self.edges[self.dict[idealNodes[i]][j].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
                                     break
             else:
-                ideal = self.shortestJump(nodeID,idealNodes)
-                for i in range(len(self.dict[ideal])): # Search through all attached edges to node i
-                    if vEdges[self.dict[ideal][i].id] == 0: # If edge is unvisited
-                        #print(f'Jump to {i}')
-                        if self.edges[self.dict[ideal][i].id].nodes[0].id != ideal:
-                            self.path.append(tuple((self.edges[self.dict[ideal][i].id].id,nodeID))) # Add unvisited edge to path
-                            if self.dfs(vEdges[:],self.edges[self.dict[ideal][i].id].nodes[0].id,cost): # Jump to and recurse over target node of unvisited edge
-                                break
-                        else:
-                            self.path.append(tuple((self.edges[self.dict[ideal][i].id].id,nodeID))) # Add unvisited edge to path
-                            if self.dfs(vEdges[:],self.edges[self.dict[ideal][i].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
-                                break
+                ideals = self.shortestJump(nodeID,idealNodes,1)
+                for i in range(len(ideals)):
+                    for j in range(len(self.dict[ideals[i]])): # Search through all attached edges to node i
+                        if vEdges[self.dict[ideals[i]][j].id] == 0: # If edge is unvisited
+                            #print(f'Jump to {i}')
+                            if self.edges[self.dict[ideals[i]][j].id].nodes[0].id != i:
+                                self.path.append(tuple((self.edges[self.dict[ideals[i]][j].id].id,nodeID))) # Add unvisited edge to path
+                                if self.dfs(vEdges[:],self.edges[self.dict[ideals[i]][j].id].nodes[0].id,cost): # Jump to and recurse over target node of unvisited edge
+                                    break
+                            else:
+                                self.path.append(tuple((self.edges[self.dict[ideals[i]][j].id].id,nodeID))) # Add unvisited edge to path
+                                if self.dfs(vEdges[:],self.edges[self.dict[ideals[i]][j].id].nodes[1].id,cost): # Jump to and recurse over target node of unvisited edge
+                                    break
             if not priorGood: # If no optimal jump point is found
                 for i in range(len(self.edges)): # Search over all edges
                     if vEdges[i] == 0: # If edge i has not been visited
@@ -227,22 +228,34 @@ class Pathfinder:
             self.path.pop(-1) # Remove last entry from path
         return False # Return to last recursion
 
-    def shortestJump(self,source,dests):
-        minDist = 1000000
-        ideal = -1
+    def shortestJump(self,source,dests,amt):
+        candidate = 100
+        minDists = [100] * amt
+        ideals = [-1] * amt
         for i in range(len(dests)):
             dist = abs(math.sqrt((self.nodes[dests[i]].x-self.nodes[source].x)**2 + (self.nodes[dests[i]].y-self.nodes[source].y)**2))
-            if dist < minDist:
-                minDist = dist
-                ideal = dests[i]
-        return ideal
+            #print(f'{dests[i]}: {dist}')
+            if dist < candidate:
+                replacedFlag = False
+                distMax = 0
+                for j in range(len(minDists)):
+                    if minDists[j] == candidate:
+                        minDists[j] = dist
+                        ideals[j] = dests[i]
+                        replacedFlag = True
+                    if minDists[j] > distMax:
+                        distMax = minDists[j]
+                candidate = distMax
+        #print(f'--BEST-- {ideal}: {minDist}')
+        while(ideals[-1]==100):
+            ideals.pop()
+        return ideals
 
     def setRipcord(self,rip=5):
         self.ripcord = rip
 
     def setSpeed(self,speed):
         self.speed = speed
-        print(self.speed)
 
     def snap(self,sensitivity=.005):
         for i in range(len(self.segments)):
@@ -317,10 +330,12 @@ class Pathfinder:
         curLine = ""
         lastPoint = (0,0)
         start = spacer.plot(lastPoint)
-        self.gcode += "G01 X-" + str(spacer.plot(lastPoint)[0]) + " Y-" + str(spacer.plot(lastPoint)[1]) + " Z0 F" + str(self.speed) + " (Here)\n"
+        self.gcode += "G01 X-" + str(spacer.plot(lastPoint)[0]) + " Y-" + str(spacer.plot(lastPoint)[1]) + " Z0 F" + str(self.speed) + "\n"
         for line in lines:
             curLine = ""
             if line.checkPickup(lastPoint):
+                if lastPoint != (0,0):
+                    curLine += "G01 Z0 F" + str(self.speed) + "\n"
                 curLine += "G01 X-" + str(spacer.plot(line.start)[0]) + " Y-" + str(spacer.plot(line.start)[1]) + " Z0 F" + str(self.speed) + "\n"
                 curLine += "G01 Z1 F" + str(self.speed) + "\n"
                 lastPoint = line.end
