@@ -14,10 +14,7 @@ class SpaceCadet:
     def step(self):
         self.x += (self.size*.6)
         if self.x + (self.size*.6) > SpaceCadet.xMax:
-            self.x = 0
-            self.y += self.size
-            if self.y > SpaceCadet.yMax:
-                self.y = SpaceCadet.yMax
+            self.nextLine()
     def reset(self):
         self.x = 0
         self.y = 0
