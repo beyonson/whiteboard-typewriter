@@ -138,24 +138,27 @@ if __name__ == "__main__":
     currentText = ""
     textfile = open("typedText.txt", "r+")
     #textfile.truncate(0)
-    spacer = SpaceCadet(2.5)
+    spacer = SpaceCadet(1.75)
 
-    if (len(sys.argv) > 2):
+    print(sys.argv)
+
+    serialToMotor = ''
+
+    if (len(sys.argv) > 3):
         print("ERROR: too many args")
         exit
-    elif (len(sys.argv) == 2):
+    elif sys.argv[1] == '1':
         serialFlag = True
+        if sys.argv[2] == '0':
+            serialToMotor = serial.Serial('/dev/ttyACM0', 115200)
+        else:
+            serialToMotor = serial.Serial('/dev/ttyACM1', 115200)
     else:
         serialFlag = False
 
-    serialToMotor = ''
+    
     if serialFlag:
-        try:
-            serialToMotor = serial.Serial('/dev/ttyACM0', 115200) # /dev/ttyACM0
-        except:
-            serialToMotor = serial.Serial('/dev/ttyACM1', 115200) # /dev/ttyACM0
-        # serialInit(serialToMotor)
-
+        
         serialToMotor.write(str.encode("\r\n\r\n"))
         time.sleep(2)   # Wait for grbl to initialize
         serialToMotor.flushInput()  # Flush startup text in serial input
