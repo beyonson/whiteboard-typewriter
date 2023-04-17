@@ -3,7 +3,7 @@ class SpaceCadet:
     yMax = 6 # 40
     def __init__(self,size):
         self.size = size
-        self.x = 0
+        self.x = -1
         self.y = 0
         self.slowdown = False
     def plot(self,coord):
