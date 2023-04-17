@@ -26,4 +26,4 @@ class SpaceCadet:
         self.x = 0
         self.y += self.size
         if self.y > SpaceCadet.yMax:
-            self.y = SpaceCadet.yMax
+            self.y = 0
