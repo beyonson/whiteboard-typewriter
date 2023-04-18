@@ -398,7 +398,7 @@ class Pathfinder:
                     dict[i].append(edge)
         return dict
 
-    def findStart(self):
+    def findStart(self,threshold=.2):
         instances = {}
         startPoints = []
         for edge in self.edges:
@@ -411,7 +411,27 @@ class Pathfinder:
             if instances[i] < 2:
                 startPoints.append(self.nodes[i])
         self.xPrint(instances)
+        betterPts = []
+        for pt in startPoints:
+            #print(f'{self.nearestNode(pt)} > {threshold}')
+            if self.nearestNode(pt) > threshold:
+                betterPts.append(pt)
+        print(f'betterPts: {len(betterPts)}, startPoints: {len(startPoints)}')
+        if len(betterPts) > 0:
+            return betterPts
         return startPoints
+
+    def nearestNode(self,node):
+        closest = 100
+        nodeID = node.id
+        for i in range(len(self.nodes)):
+            if i == nodeID:
+                continue
+            dist = self.getPointDistance(self.nodes[nodeID].coords(),self.nodes[i].coords())
+            #print(dist)
+            if dist < closest:
+                closest = dist
+        return closest
 
     def deNodify(self):
         self.xPrint("Convert Nodes and Edges to Lines")
