@@ -115,7 +115,7 @@ class Pathfinder:
         self.gcode = "" #      gcode          : String holding complete gcode for given character.
         self.ripcord = -1 #    ripcord        : Float holding the amount of time that is allowed to be spent on pathfinding before exiting, if set.
         self.currentCode = -1 #currentCode    : Integer holding the current gcode command in place
-        self.speed = 100 #   speed          : Integer holding the feed rate printed in gcode
+        self.speed = 300 #   speed          : Integer holding the feed rate printed in gcode
         self.standardize()
         self.snap(sensitivity)
 
@@ -429,6 +429,9 @@ class Pathfinder:
                 orderedLines[i+1].flip()
             elif self.minPath[i+1][1] != -1 and orderedLines[i+1].end == self.nodes[self.minPath[i+1][1]].coords(): #  and orderedLines[i].end == orderedLines[i+1].end
                 self.xPrint("Flip B")
+                orderedLines[i+1].flip()
+        for i in range(len(orderedLines)-1):
+            if self.minPath[i+1][1] != -1 and self.getPointDistance(orderedLines[i].end,orderedLines[i+1].end) < self.getPointDistance(orderedLines[i].end,orderedLines[i+1].start):
                 orderedLines[i+1].flip()
         self.segments = orderedLines
 
