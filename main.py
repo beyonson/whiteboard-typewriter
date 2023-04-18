@@ -52,7 +52,7 @@ def segmentationProcess(tgt):
     arc_list = []
     # arc_list = find_arcs(centers, radii, votes, img)
 
-    # line_segments = remove_overlap_lines(line_segments, arc_list, 0.25, 2)
+    # line_segments = remove_overlap_lines(line_segments, arc_list, 0.05, 2)
 
     print("Finished segments")
 
@@ -78,7 +78,7 @@ def pathfindingProcess(pack,spacer):
     lines = pack.lines
     print(f'Lines: {len(lines)}')
     pathfinder = Pathfinder(lines,.025)
-    pathfinder.setSpeed(500)
+    pathfinder.setSpeed(300)
     if pack.type == "Cached":
         gcode = pathfinder.convert(spacer)
         spacer.step()
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     
     if serialFlag:
-        
+
         serialToMotor.write(str.encode("\r\n\r\n"))
         time.sleep(2)   # Wait for grbl to initialize
         serialToMotor.flushInput()  # Flush startup text in serial input
