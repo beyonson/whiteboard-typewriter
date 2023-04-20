@@ -188,8 +188,8 @@ if __name__ == "__main__":
                         i += 1
                         if i >= len(updatedText)-1:
                             break;
-                # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
-                filename = "character_segmentation/prototyping/chars/myfile" + str(asciiNum) + ".bmp"
+                filename = "font-loader/chars/" + str(asciiNum) + ".bmp"
+                # filename = "character_segmentation/prototyping/chars/myfile" + str(asciiNum) + ".bmp"
                 segInfo = [filename, letter]
 
                 startSeg = time.time()
