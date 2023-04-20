@@ -324,13 +324,14 @@ class Pathfinder:
     # Converts edges in the optimized order into gcode
     def convert(self,spacer,lines=""):
         self.currentCode = 0
+        rounding = 3
         self.gcode = ""
         if lines == "":
             lines = self.segments
         curLine = ""
         lastPoint = (0,0)
         start = spacer.plot(lastPoint)
-        self.gcode += "G01 X-" + str(round(spacer.plot(lastPoint)[0],4)) + " Y-" + str(round(spacer.plot(lastPoint)[1],4)) + " Z0 "
+        self.gcode += "G01 X-" + str(round(spacer.plot(lastPoint)[0],rounding)) + " Y-" + str(round(spacer.plot(lastPoint)[1],rounding)) + " Z0 "
         if spacer.slowdown:
             self.gcode += "F100\n"
             spacer.slowdown = False
@@ -341,7 +342,7 @@ class Pathfinder:
             if line.checkPickup(lastPoint):
                 if lastPoint != (0,0):
                     curLine += "G01 Z0 F" + str(self.speed) + "\n"
-                curLine += "G01 X-" + str(round(spacer.plot(line.start)[0],4)) + " Y-" + str(round(spacer.plot(line.start)[1],4)) + " Z0 F" + str(self.speed) + "\n"
+                curLine += "G01 X-" + str(round(spacer.plot(line.start)[0],rounding)) + " Y-" + str(round(spacer.plot(line.start)[1],rounding)) + " Z0 F" + str(self.speed) + "\n"
                 curLine += "G01 Z1.2 F" + str(self.speed) + "\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
@@ -351,12 +352,12 @@ class Pathfinder:
                     curLine += "G02 "
                 else:
                     curLine += "G03 "
-            curLine += "X-" + str(round(spacer.plot(line.end)[0],4)) + " Y-" + str(round(spacer.plot(line.end)[1],4)) + " Z1.2"
+            curLine += "X-" + str(round(spacer.plot(line.end)[0],rounding)) + " Y-" + str(round(spacer.plot(line.end)[1],rounding)) + " Z1.2"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
-                curLine += " I-" + str(round(line.getRelativeOf(line.center)[0],4)) + " J-" + str(round(line.getRelativeOf(line.center)[1],4))
+                curLine += " I-" + str(round(line.getRelativeOf(line.center)[0],rounding)) + " J-" + str(round(line.getRelativeOf(line.center)[1],rounding))
             self.gcode += curLine + " F" + str(self.speed) + "\n"
-        self.gcode += "G01 X-" + str(round(spacer.plot(line.end)[0],4)) + " Y-" + str(round(spacer.plot(line.end)[1],4)) + " Z0 F" + str(self.speed) + "\n"
+        self.gcode += "G01 X-" + str(round(spacer.plot(line.end)[0],rounding)) + " Y-" + str(round(spacer.plot(line.end)[1],rounding)) + " Z0 F" + str(self.speed) + "\n"
 
     def getDistance(self,line,nA,nB):
         if line.center[0] == -1:
