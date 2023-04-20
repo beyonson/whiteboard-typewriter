@@ -88,6 +88,7 @@ def pathfindingProcess(pack,spacer):
         return pathfinder.getGCode()
     elif pack.type == "Reset":
         spacer.reset()
+        charCache.clear()
         return "G01X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     elif pack.type == "Return":
         spacer.nextLine()
@@ -98,6 +99,7 @@ def pathfindingProcess(pack,spacer):
     elif pack.type == "Size":
         spacer.newSize(int(pack.letter[1:]))
         spacer.reset()
+        charCache.clear()
         return "G01X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     pathfinder.setVerbosity(False)
     pathfinder.setRipcord(5)
