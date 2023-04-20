@@ -81,7 +81,7 @@ def pathfindingProcess(pack,spacer):
     lines = pack.lines
     print(f'Lines: {len(lines)}')
     pathfinder = Pathfinder(lines,.025)
-    pathfinder.setSpeed(400)
+    pathfinder.setSpeed(300)
     if pack.type == "Cached":
         gcode = pathfinder.convert(spacer)
         spacer.step()
