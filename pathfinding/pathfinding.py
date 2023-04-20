@@ -342,7 +342,7 @@ class Pathfinder:
                 if lastPoint != (0,0):
                     curLine += "G01 Z0 F" + str(self.speed) + "\n"
                 curLine += "G01 X-" + str(round(spacer.plot(line.start)[0],4)) + " Y-" + str(round(spacer.plot(line.start)[1],4)) + " Z0 F" + str(self.speed) + "\n"
-                curLine += "G01 Z.4 F" + str(self.speed) + "\n"
+                curLine += "G01 Z1.2 F" + str(self.speed) + "\n"
                 lastPoint = line.end
             if line.center[0] == -1 and line.center[1] == -1:
                 curLine += "G01 "
@@ -351,7 +351,7 @@ class Pathfinder:
                     curLine += "G02 "
                 else:
                     curLine += "G03 "
-            curLine += "X-" + str(round(spacer.plot(line.end)[0],4)) + " Y-" + str(round(spacer.plot(line.end)[1],4)) + " Z.4"
+            curLine += "X-" + str(round(spacer.plot(line.end)[0],4)) + " Y-" + str(round(spacer.plot(line.end)[1],4)) + " Z1.2"
             lastPoint = line.end
             if line.center[0] != -1 and line.center[1] != -1:
                 curLine += " I-" + str(round(line.getRelativeOf(line.center)[0],4)) + " J-" + str(round(line.getRelativeOf(line.center)[1],4))

@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     currentText = ""
     textfile = open("typedText.txt", "r+")
-    #textfile.truncate(0)
+    textfile.truncate(0)
     spacer = SpaceCadet(1.75)
 
     print(sys.argv)
@@ -156,10 +156,8 @@ if __name__ == "__main__":
         exit
     elif sys.argv[1] == '1':
         serialFlag = True
-        if sys.argv[2] == '0':
-            serialToMotor = serial.Serial('/dev/ttyACM0', 115200)
-        else:
-            serialToMotor = serial.Serial('/dev/ttyACM1', 115200)
+        if sys.argv[2]:
+            serialToMotor = serial.Serial('/dev/ttyACM'+str(sys.argv[2]), 115200)
     else:
         serialFlag = False
 
