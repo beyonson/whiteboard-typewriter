@@ -28,6 +28,9 @@ def segmentationProcess(tgt):
     if tgt[1] == '_':
         pack = PathfindingPackage("",str(tgt[1]),"Font","Space")
         return pack
+    if tgt[1][0] == '#':
+        pack = PathfindingPackage("",str(tgt[1]),"Font","Size")
+        return pack
     out = charCache.poll(tgt[1]) # Out is the collection of segments, not gcode, because the spacer still needs to determine where the letter will be drawn
     if out != "":
         pack = PathfindingPackage(out,str(tgt[1]),"Font","Cached")
@@ -91,6 +94,10 @@ def pathfindingProcess(pack,spacer):
         return "G01X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     elif pack.type == "Space":
         spacer.step()
+        return "G01X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
+    elif pack.type == "Size":
+        spacer.newSize(int(pack.letter[1:]))
+        spacer.reset()
         return "G01X-" + str(spacer.plot((0,0))[0]) + "Y-" + str(spacer.plot((0,0))[1]) + "Z0F100\n"
     pathfinder.setVerbosity(False)
     pathfinder.setRipcord(5)
@@ -156,7 +163,7 @@ if __name__ == "__main__":
     else:
         serialFlag = False
 
-    
+
     if serialFlag:
 
         serialToMotor.write(str.encode("\r\n\r\n"))
@@ -172,14 +179,23 @@ if __name__ == "__main__":
         updatedText = updatedText.strip()
         if (updatedText != currentText and len(updatedText) > len(currentText)):
             # if text is changed, send to yasser and update
-            for i in range(len(currentText), len(updatedText)):
-                asciiNum = ord(updatedText[i])
+            i = len(currentText)
+            while i < len(updatedText):
+                print(f'--{i}--')
+                letter = updatedText[i]
+                asciiNum = ord(letter)
+                if chr(asciiNum) == '#':
+                    while ord(updatedText[i+1]) >= 48 and ord(updatedText[i+1]) <= 57:
+                        letter += updatedText[i+1]
+                        i += 1
+                        if i >= len(updatedText)-1:
+                            break;
                 # filename = "font-loader/chars/myfile" + str(asciiNum) + ".bmp"
                 filename = "character_segmentation/prototyping/chars/myfile" + str(asciiNum) + ".bmp"
-                segInfo = [filename, chr(asciiNum)]
+                segInfo = [filename, letter]
 
                 startSeg = time.time()
-                print(updatedText[i])
+                print(letter)
                 lines = segmentationProcess(segInfo)
                 endSeg = time.time()
                 gcode = pathfindingProcess(lines,spacer)
@@ -190,5 +206,6 @@ if __name__ == "__main__":
                     gantryTime = serialProcess(gcode, serialToMotor)
                 print(f'Time elapsed for gantry: {gantryTime}')
                 print('\n')
+                i += 1
 
             currentText = updatedText

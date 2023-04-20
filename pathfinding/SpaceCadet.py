@@ -27,3 +27,7 @@ class SpaceCadet:
         self.y += self.size
         if self.y > SpaceCadet.yMax:
             self.y = 0
+    def newSize(self,size):
+        actualSize = 1.5 + ((size-12)*.25)
+        self.size = actualSize
+        print(f'Set size to {size}')
