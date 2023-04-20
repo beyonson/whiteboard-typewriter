@@ -33,7 +33,17 @@ class CharacterCache:
             "X" : 0.17,
             "Q" : 0.11,
             "J" : 0.10,
-            "Z" : 0.07
+            "Z" : 0.07,
+            "0" : 1.00,
+            "1" : 1.00,
+            "2" : 1.00,
+            "3" : 1.00,
+            "4" : 1.00,
+            "5" : 1.00,
+            "6" : 1.00,
+            "7" : 1.00,
+            "8" : 1.00,
+            "9" : 1.00
         }
     def add(self,letter,lines):
         weight = CharacterCache._RECENCYWEIGHT + round(self.getFrequency(letter) * CharacterCache._FREQUENCYMULT)
